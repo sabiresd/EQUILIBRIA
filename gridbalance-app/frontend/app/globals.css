@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Charte GridBalance : fond #040e1b, primaire vert emeraude #17c884. */
+    --background: 213 76% 6%; /* #040e1b */
+    --foreground: 210 30% 94%;
+
+    --card: 213 60% 9%;
+    --card-foreground: 210 30% 94%;
+
+    --popover: 213 60% 9%;
+    --popover-foreground: 210 30% 94%;
+
+    --primary: 159 79% 44%; /* #17c884 */
+    --primary-foreground: 213 76% 6%;
+
+    --secondary: 213 40% 16%;
+    --secondary-foreground: 210 30% 94%;
+
+    --muted: 213 30% 18%;
+    --muted-foreground: 213 15% 65%;
+
+    --accent: 159 79% 44%;
+    --accent-foreground: 213 76% 6%;
+
+    --destructive: 356 82% 62%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 20% 100%;
+    --input: 210 20% 100%;
+    --ring: 159 79% 44%; /* focus visible = vert emeraude */
+
+    --radius: 0.6rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(70rem 40rem at 12% -10%, rgba(23, 200, 132, 0.07), transparent 60%),
+      radial-gradient(50rem 30rem at 110% 0%, rgba(56, 189, 248, 0.05), transparent 55%);
+    background-attachment: fixed;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Accessibilite : focus TOUJOURS visible au clavier. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-emerald-500 ring-offset-2 ring-offset-background;
+  }
+
+  /* Respect de prefers-reduced-motion : on neutralise animations et transitions. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Barres de defilement sobres. */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.18);
+  }
+}
+
+@layer components {
+  /* Lien d'evitement (accessibilite clavier). */
+  .skip-link {
+    @apply absolute left-4 top-4 z-[200] -translate-y-24 rounded-md bg-emerald-500 px-4 py-2 text-sm font-semibold text-base-900 transition-transform;
+  }
+  .skip-link:focus {
+    @apply translate-y-0;
+  }
+
+  .kpi-value {
+    @apply font-mono text-3xl font-semibold tracking-tight text-foreground tabular-nums;
+  }
+
+  .mono-id {
+    @apply font-mono text-xs text-muted-foreground;
+  }
+
+  /* Surface "verre" utilisee par les panneaux secondaires. */
+  .panel {
+    @apply rounded-xl border border-white/[0.07] bg-base-800/70 shadow-panel backdrop-blur-sm;
+  }
+}
+
+/* Recharts : styles neutres coherents avec le theme sombre. */
+.recharts-cartesian-grid line {
+  stroke: rgba(255, 255, 255, 0.06);
+}
+.recharts-text {
+  fill: rgb(148 163 184);
+  font-size: 11px;
+}
+.recharts-surface:focus {
+  outline: none;
+}
+.recharts-default-legend {
+  font-size: 12px;
+}

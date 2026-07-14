@@ -1,0 +1,242 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GridBalance AI Morocco — contrats d'echange avec les 4 workflows",
+  "description": "Source de verite unique. Le backend genere ses modeles Pydantic depuis contracts.py, le frontend ses schemas Zod depuis contracts.ts. Toute evolution se fait ICI d'abord.",
+  "version": "1.0.0",
+  "$defs": {
+    "CorrelationId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "UUID v4 genere au debut de chaque run, propage a travers les 4 workflows et affiche dans l'UI."
+    },
+    "Site": {
+      "type": "object",
+      "required": ["lat", "lon"],
+      "properties": {
+        "lat": { "type": "number", "minimum": -90, "maximum": 90 },
+        "lon": { "type": "number", "minimum": -180, "maximum": 180 },
+        "name": { "type": "string" }
+      }
+    },
+    "Scenario": { "enum": ["normal", "windless"] },
+    "RagMode": { "enum": ["strict", "hybrid", "off"] },
+
+    "WF1Request": {
+      "type": "object",
+      "required": ["correlation_id", "site", "horizon_hours", "scenario"],
+      "properties": {
+        "correlation_id": { "$ref": "#/$defs/CorrelationId" },
+        "site": { "$ref": "#/$defs/Site" },
+        "horizon_hours": { "type": "integer", "const": 360 },
+        "scenario": { "$ref": "#/$defs/Scenario" }
+      }
+    },
+    "SeriesPoint": {
+      "type": "object",
+      "required": ["h", "wind_ms", "ghi", "prod_wind_mw", "prod_solar_mw", "demand_mw"],
+      "properties": {
+        "h": { "type": "integer", "minimum": 0, "maximum": 359 },
+        "wind_ms": { "type": "number", "minimum": 0 },
+        "ghi": { "type": "number", "minimum": 0, "description": "irradiance globale horizontale, W/m2" },
+        "prod_wind_mw": { "type": "number", "minimum": 0 },
+        "prod_solar_mw": { "type": "number", "minimum": 0 },
+        "demand_mw": { "type": "number", "minimum": 0 }
+      }
+    },
+    "WF1Response": {
+      "type": "object",
+      "required": ["series"],
+      "properties": {
+        "series": { "type": "array", "items": { "$ref": "#/$defs/SeriesPoint" }, "minItems": 1 }
+      }
+    },
+
+    "Battery": {
+      "type": "object",
+      "required": ["capacity_mwh", "p_max_mw", "soc_min", "efficiency"],
+      "properties": {
+        "capacity_mwh": { "type": "number", "exclusiveMinimum": 0 },
+        "p_max_mw": { "type": "number", "exclusiveMinimum": 0 },
+        "soc_min": { "type": "number", "minimum": 0, "maximum": 1, "description": "fraction de la capacite" },
+        "efficiency": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+        "degradation_cost_mwh": { "type": "number", "minimum": 0, "default": 45, "description": "MAD/MWh decharge (demo)" }
+      }
+    },
+    "Tariffs": {
+      "type": "object",
+      "description": "MAD/MWh par periode tarifaire. Valeurs de DEMONSTRATION, non officielles ANRE.",
+      "required": ["creuse", "normale", "pointe"],
+      "properties": {
+        "creuse": { "type": "number", "minimum": 0 },
+        "normale": { "type": "number", "minimum": 0 },
+        "pointe": { "type": "number", "minimum": 0 }
+      }
+    },
+    "WF2Request": {
+      "type": "object",
+      "required": ["correlation_id", "series", "battery", "tariffs"],
+      "properties": {
+        "correlation_id": { "$ref": "#/$defs/CorrelationId" },
+        "series": { "type": "array", "items": { "$ref": "#/$defs/SeriesPoint" } },
+        "battery": { "$ref": "#/$defs/Battery" },
+        "tariffs": { "$ref": "#/$defs/Tariffs" }
+      }
+    },
+    "HourlyPoint": {
+      "type": "object",
+      "required": ["h", "deficit_mw", "soc", "dispatch_mw", "cost"],
+      "properties": {
+        "h": { "type": "integer" },
+        "deficit_mw": { "type": "number", "minimum": 0 },
+        "soc": { "type": "number", "minimum": 0, "maximum": 1 },
+        "dispatch_mw": { "type": "number", "description": "positif = decharge batterie, negatif = charge" },
+        "cost": { "type": "number", "minimum": 0 },
+        "grid_mw": { "type": "number", "minimum": 0 },
+        "tariff_period": { "enum": ["creuse", "normale", "pointe"] }
+      }
+    },
+    "WF2Totals": {
+      "type": "object",
+      "required": ["total_cost", "total_deficit_mwh", "hours_in_deficit"],
+      "properties": {
+        "total_cost": { "type": "number" },
+        "total_deficit_mwh": { "type": "number" },
+        "hours_in_deficit": { "type": "integer" },
+        "share_battery": { "type": "number" },
+        "share_grid": { "type": "number" },
+        "share_production": { "type": "number" },
+        "protected_load_violations": { "type": "integer", "default": 0, "description": "cible : 0" }
+      }
+    },
+    "WF2Response": {
+      "type": "object",
+      "required": ["hourly", "totals"],
+      "properties": {
+        "hourly": { "type": "array", "items": { "$ref": "#/$defs/HourlyPoint" } },
+        "totals": { "$ref": "#/$defs/WF2Totals" }
+      }
+    },
+
+    "ProtectedLoad": {
+      "type": "object",
+      "required": ["id", "label"],
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "criticality": { "enum": ["critical", "high", "medium", "low"] },
+        "locked": { "type": "boolean", "default": true, "description": "true = delestage interdit (hopital)" }
+      }
+    },
+    "DeficitSummary": {
+      "type": "object",
+      "required": ["total_deficit_mwh", "hours_in_deficit", "peak_deficit_mw"],
+      "properties": {
+        "total_deficit_mwh": { "type": "number" },
+        "hours_in_deficit": { "type": "integer" },
+        "peak_deficit_mw": { "type": "number" },
+        "windless_window": {
+          "type": "object",
+          "properties": { "start_h": { "type": "integer" }, "end_h": { "type": "integer" } }
+        }
+      }
+    },
+    "WF3Request": {
+      "type": "object",
+      "required": ["correlation_id", "deficit_summary", "protected_loads", "rag_mode"],
+      "properties": {
+        "correlation_id": { "$ref": "#/$defs/CorrelationId" },
+        "deficit_summary": { "$ref": "#/$defs/DeficitSummary" },
+        "protected_loads": { "type": "array", "items": { "$ref": "#/$defs/ProtectedLoad" } },
+        "rag_mode": { "$ref": "#/$defs/RagMode" }
+      }
+    },
+    "Citation": {
+      "type": "object",
+      "required": ["doc", "page", "extrait"],
+      "properties": {
+        "doc": { "type": "string" },
+        "page": { "type": "integer", "minimum": 1 },
+        "extrait": { "type": "string" },
+        "score": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "PlanAction": {
+      "type": "object",
+      "required": ["site", "action", "delta_mw", "hours"],
+      "properties": {
+        "site": { "type": "string" },
+        "action": { "enum": ["delestage", "decalage", "batterie", "achat_reseau"] },
+        "delta_mw": { "type": "number" },
+        "hours": { "type": "array", "items": { "type": "integer" } },
+        "justification": { "type": "string" }
+      }
+    },
+    "Plan": {
+      "type": "object",
+      "required": ["id", "actions", "citations", "fairness_score"],
+      "properties": {
+        "id": { "enum": ["A", "B", "C"] },
+        "label": { "type": "string" },
+        "actions": { "type": "array", "items": { "$ref": "#/$defs/PlanAction" } },
+        "citations": { "type": "array", "items": { "$ref": "#/$defs/Citation" } },
+        "fairness_score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "estimated_cost": { "type": "number" },
+        "covered_deficit_mwh": { "type": "number" },
+        "protected_loads_respected": { "type": "boolean" }
+      }
+    },
+    "WF3Response": {
+      "type": "object",
+      "required": ["plans"],
+      "properties": {
+        "plans": { "type": "array", "items": { "$ref": "#/$defs/Plan" }, "minItems": 1, "maxItems": 3 },
+        "rag_fallback": { "type": "boolean", "default": false, "description": "true = preuve insuffisante" },
+        "human_validation_required": { "type": "boolean", "default": false }
+      }
+    },
+
+    "DecisionCard": {
+      "type": "object",
+      "description": "JSON canonique (cles triees, separateurs compacts) hashe en SHA-256. Toute modification change le hash.",
+      "required": ["correlation_id", "plan_id", "actions", "proposed_by", "validated_by", "validated_at", "comment"],
+      "properties": {
+        "correlation_id": { "$ref": "#/$defs/CorrelationId" },
+        "plan_id": { "enum": ["A", "B", "C"] },
+        "actions": { "type": "array", "items": { "$ref": "#/$defs/PlanAction" } },
+        "citations": { "type": "array", "items": { "$ref": "#/$defs/Citation" } },
+        "deficit_summary": { "$ref": "#/$defs/DeficitSummary" },
+        "fairness_score": { "type": "number" },
+        "rag_fallback": { "type": "boolean" },
+        "proposed_by": { "type": "string", "description": "email de l'operator" },
+        "validated_by": { "type": "string", "description": "email du supervisor" },
+        "validated_at": { "type": "string", "format": "date-time" },
+        "comment": { "type": "string", "minLength": 1, "description": "obligatoire a la validation" },
+        "disclaimer": { "type": "string" }
+      }
+    },
+    "WF4Request": {
+      "type": "object",
+      "required": ["correlation_id", "decision_card"],
+      "properties": {
+        "correlation_id": { "$ref": "#/$defs/CorrelationId" },
+        "decision_card": { "$ref": "#/$defs/DecisionCard" }
+      }
+    },
+    "WF4Response": {
+      "type": "object",
+      "required": ["logged", "sha256"],
+      "properties": {
+        "logged": { "type": "boolean" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "mongo_id": { "type": "string" },
+        "notified": {
+          "type": "object",
+          "properties": {
+            "slack": { "type": "boolean" },
+            "email": { "type": "boolean" }
+          }
+        }
+      }
+    }
+  }
+}
