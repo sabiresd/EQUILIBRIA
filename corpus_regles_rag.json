@@ -1,0 +1,42 @@
+{
+  "corpus": "regles_delestage_equitable",
+  "version": "1.0",
+  "passages": [
+    {
+      "passage_id": "R01",
+      "categorie": "site_critique",
+      "texte": "Les sites de sante (hopital, centre de dialyse, maternite) sont classes Critical_Infra. Leur delestage est interdit en toutes circonstances, y compris en situation de deficit maximal. Priorite 0, verrouillee.",
+      "score": 0.97
+    },
+    {
+      "passage_id": "R02",
+      "categorie": "priorite_charge",
+      "texte": "Ordre de priorite des charges, du plus protege au plus delestable : 1 sante, 2 eau et assainissement, 3 industrie a process continu, 4 tertiaire, 5 eclairage non essentiel, 6 confort (climatisation, enseignes).",
+      "score": 0.93
+    },
+    {
+      "passage_id": "R03",
+      "categorie": "equite",
+      "texte": "Rotation equitable obligatoire. Un site ayant subi un delestage au cours des 24 heures glissantes est exclu du tour suivant tant qu'un autre site de meme priorite n'a pas ete sollicite. L'historique des sites penalises fait foi.",
+      "score": 0.95
+    },
+    {
+      "passage_id": "R04",
+      "categorie": "economie",
+      "texte": "A priorite egale et a equite respectee, delester en premier le site dont le cout evite par MWh est le plus eleve (regle dite du moins cher d'abord). Le tarif horaire ANRE sert de reference.",
+      "score": 0.88
+    },
+    {
+      "passage_id": "R05",
+      "categorie": "plafond",
+      "texte": "Aucun site ne peut subir plus de 2 heures consecutives de delestage. Au-dela, la charge doit etre reportee sur le site suivant dans l'ordre de rotation.",
+      "score": 0.86
+    },
+    {
+      "passage_id": "H01",
+      "categorie": "historique",
+      "texte": "Historique des sites deja penalises sur la periode : site_industriel_A (2 h le 12/12), site_tertiaire_B (1 h le 12/12). Le site_industriel_C n'a pas encore ete sollicite.",
+      "score": 0.91
+    }
+  ]
+}

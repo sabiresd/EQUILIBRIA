@@ -1,0 +1,100 @@
+{
+  "protocol_version": "a2a/1.0",
+  "id": "agent_journal",
+  "name": "Agent Journal",
+  "description": "Horodate et journalise chaque decision dans MongoDB (collection journal_decisions), avec retry et ecriture locale de secours. Agrege les metriques energie et RAG et expose le rapport sur 15 jours.",
+  "version": "1.0.0",
+  "provider": {
+    "organization": "Defi 10 - Equilibrage reseau",
+    "platform": "ABA Fusion (Langflow 1.7.0)"
+  },
+  "url": "https://stg-agentic.abafusion.ai/api/v1/webhook/1f8f820c-e341-4394-bd2d-72d9b9c14140",
+  "capabilities": {
+    "streaming": false,
+    "push_notifications": true,
+    "state_transition_history": false
+  },
+  "default_input_modes": [
+    "application/json"
+  ],
+  "default_output_modes": [
+    "application/json"
+  ],
+  "skills": [
+    {
+      "id": "journalisation",
+      "name": "Journalisation anti-falsification",
+      "description": "Horodatage serveur puis ecriture dans MongoDB Atlas Data API.",
+      "tags": [
+        "mongodb",
+        "audit",
+        "horodatage"
+      ],
+      "examples": [
+        "Journalise la decision d'equilibrage du 13/12"
+      ]
+    },
+    {
+      "id": "metriques",
+      "name": "Agregation des metriques",
+      "description": "Cout total, part batterie/grid, heures en deficit, et metriques RAG (taux de citation, faithfulness, taux de fallback).",
+      "tags": [
+        "metriques",
+        "dashboard"
+      ],
+      "examples": [
+        "Rapport sur 15 jours"
+      ]
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "from": {
+        "enum": [
+          "agent_calcul",
+          "agent_plan"
+        ]
+      },
+      "action": {
+        "enum": [
+          "plan_calcule",
+          "plan_justifie",
+          "plan_fallback"
+        ]
+      },
+      "payload": {
+        "type": "object"
+      }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "metriques_energie": {
+        "type": "object"
+      },
+      "metriques_rag": {
+        "type": "object"
+      },
+      "rapport_15_jours": {
+        "type": "object"
+      }
+    }
+  },
+  "sends_to": [],
+  "dependencies": [
+    {
+      "type": "llm",
+      "name": "Google Gemini",
+      "model": "gemini-2.5-flash"
+    },
+    {
+      "type": "http",
+      "name": "MongoDB Atlas Data API",
+      "url": "https://eu-central-1.aws.data.mongodb-api.com/app/REMPLACER-APP-ID/endpoint/data/v1/action/insertOne",
+      "optional": false,
+      "note": "en cas d'echec : retry x3 avec backoff, puis ecriture locale"
+    }
+  ]
+}

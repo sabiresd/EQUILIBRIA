@@ -1,0 +1,242 @@
+[
+ {
+  "h": 0,
+  "conso_mw": 53052,
+  "eolien_mw": 1464,
+  "solaire_mw": 0,
+  "thermique_mw": 2688,
+  "nucleaire_mw": 53758,
+  "hydraulique_mw": 8834,
+  "co2_g_kwh": 20
+ },
+ {
+  "h": 1,
+  "conso_mw": 51538,
+  "eolien_mw": 1280,
+  "solaire_mw": 0,
+  "thermique_mw": 2278,
+  "nucleaire_mw": 52920,
+  "hydraulique_mw": 8708,
+  "co2_g_kwh": 18
+ },
+ {
+  "h": 2,
+  "conso_mw": 49181,
+  "eolien_mw": 1046,
+  "solaire_mw": 0,
+  "thermique_mw": 2006,
+  "nucleaire_mw": 52848,
+  "hydraulique_mw": 8356,
+  "co2_g_kwh": 18
+ },
+ {
+  "h": 3,
+  "conso_mw": 47712,
+  "eolien_mw": 833,
+  "solaire_mw": 0,
+  "thermique_mw": 1863,
+  "nucleaire_mw": 53512,
+  "hydraulique_mw": 7708,
+  "co2_g_kwh": 16
+ },
+ {
+  "h": 4,
+  "conso_mw": 47756,
+  "eolien_mw": 684,
+  "solaire_mw": 0,
+  "thermique_mw": 1827,
+  "nucleaire_mw": 53747,
+  "hydraulique_mw": 7580,
+  "co2_g_kwh": 16
+ },
+ {
+  "h": 5,
+  "conso_mw": 49187,
+  "eolien_mw": 648,
+  "solaire_mw": 0,
+  "thermique_mw": 1759,
+  "nucleaire_mw": 53864,
+  "hydraulique_mw": 7756,
+  "co2_g_kwh": 16
+ },
+ {
+  "h": 6,
+  "conso_mw": 51364,
+  "eolien_mw": 602,
+  "solaire_mw": 0,
+  "thermique_mw": 1903,
+  "nucleaire_mw": 53829,
+  "hydraulique_mw": 8401,
+  "co2_g_kwh": 16
+ },
+ {
+  "h": 7,
+  "conso_mw": 53882,
+  "eolien_mw": 509,
+  "solaire_mw": 20,
+  "thermique_mw": 2026,
+  "nucleaire_mw": 53922,
+  "hydraulique_mw": 9550,
+  "co2_g_kwh": 16
+ },
+ {
+  "h": 8,
+  "conso_mw": 56458,
+  "eolien_mw": 404,
+  "solaire_mw": 986,
+  "thermique_mw": 2220,
+  "nucleaire_mw": 53554,
+  "hydraulique_mw": 10696,
+  "co2_g_kwh": 17
+ },
+ {
+  "h": 9,
+  "conso_mw": 58092,
+  "eolien_mw": 348,
+  "solaire_mw": 3796,
+  "thermique_mw": 2057,
+  "nucleaire_mw": 53420,
+  "hydraulique_mw": 9957,
+  "co2_g_kwh": 16
+ },
+ {
+  "h": 10,
+  "conso_mw": 58356,
+  "eolien_mw": 264,
+  "solaire_mw": 6817,
+  "thermique_mw": 1919,
+  "nucleaire_mw": 53480,
+  "hydraulique_mw": 8298,
+  "co2_g_kwh": 15
+ },
+ {
+  "h": 11,
+  "conso_mw": 59363,
+  "eolien_mw": 110,
+  "solaire_mw": 8874,
+  "thermique_mw": 1824,
+  "nucleaire_mw": 53378,
+  "hydraulique_mw": 7535,
+  "co2_g_kwh": 14
+ },
+ {
+  "h": 12,
+  "conso_mw": 59328,
+  "eolien_mw": 54,
+  "solaire_mw": 9390,
+  "thermique_mw": 1822,
+  "nucleaire_mw": 53280,
+  "hydraulique_mw": 7196,
+  "co2_g_kwh": 15
+ },
+ {
+  "h": 13,
+  "conso_mw": 56188,
+  "eolien_mw": 40,
+  "solaire_mw": 8336,
+  "thermique_mw": 1846,
+  "nucleaire_mw": 53144,
+  "hydraulique_mw": 6650,
+  "co2_g_kwh": 15
+ },
+ {
+  "h": 14,
+  "conso_mw": 54357,
+  "eolien_mw": 48,
+  "solaire_mw": 5668,
+  "thermique_mw": 1853,
+  "nucleaire_mw": 53156,
+  "hydraulique_mw": 6776,
+  "co2_g_kwh": 16
+ },
+ {
+  "h": 15,
+  "conso_mw": 52818,
+  "eolien_mw": 60,
+  "solaire_mw": 2400,
+  "thermique_mw": 2014,
+  "nucleaire_mw": 53186,
+  "hydraulique_mw": 8042,
+  "co2_g_kwh": 16
+ },
+ {
+  "h": 16,
+  "conso_mw": 53810,
+  "eolien_mw": 96,
+  "solaire_mw": 256,
+  "thermique_mw": 3050,
+  "nucleaire_mw": 52995,
+  "hydraulique_mw": 11454,
+  "co2_g_kwh": 22
+ },
+ {
+  "h": 17,
+  "conso_mw": 57144,
+  "eolien_mw": 142,
+  "solaire_mw": 2,
+  "thermique_mw": 4217,
+  "nucleaire_mw": 53125,
+  "hydraulique_mw": 15378,
+  "co2_g_kwh": 26
+ },
+ {
+  "h": 18,
+  "conso_mw": 59082,
+  "eolien_mw": 154,
+  "solaire_mw": 2,
+  "thermique_mw": 4603,
+  "nucleaire_mw": 53341,
+  "hydraulique_mw": 15744,
+  "co2_g_kwh": 28
+ },
+ {
+  "h": 19,
+  "conso_mw": 58278,
+  "eolien_mw": 207,
+  "solaire_mw": 0,
+  "thermique_mw": 4507,
+  "nucleaire_mw": 53442,
+  "hydraulique_mw": 14890,
+  "co2_g_kwh": 28
+ },
+ {
+  "h": 20,
+  "conso_mw": 55990,
+  "eolien_mw": 376,
+  "solaire_mw": 0,
+  "thermique_mw": 4044,
+  "nucleaire_mw": 53516,
+  "hydraulique_mw": 12486,
+  "co2_g_kwh": 26
+ },
+ {
+  "h": 21,
+  "conso_mw": 55164,
+  "eolien_mw": 659,
+  "solaire_mw": 0,
+  "thermique_mw": 3913,
+  "nucleaire_mw": 53416,
+  "hydraulique_mw": 10788,
+  "co2_g_kwh": 26
+ },
+ {
+  "h": 22,
+  "conso_mw": 56658,
+  "eolien_mw": 920,
+  "solaire_mw": 1,
+  "thermique_mw": 3523,
+  "nucleaire_mw": 53448,
+  "hydraulique_mw": 10462,
+  "co2_g_kwh": 24
+ },
+ {
+  "h": 23,
+  "conso_mw": 56041,
+  "eolien_mw": 1171,
+  "solaire_mw": 0,
+  "thermique_mw": 2474,
+  "nucleaire_mw": 53574,
+  "hydraulique_mw": 10008,
+  "co2_g_kwh": 18
+ }
+]

@@ -1,0 +1,107 @@
+{
+  "protocol_version": "a2a/1.0",
+  "id": "agent_simulateur",
+  "name": "Agent Simulateur",
+  "description": "Collecte l'etat du reseau electrique (production eolienne, solaire, thermique et consommation) sur un horizon de 15 jours. Bascule sur un dataset fige du 13/12/2025 (jour sans vent reel) si l'API ODRE est indisponible.",
+  "version": "1.0.0",
+  "provider": {
+    "organization": "Defi 10 - Equilibrage reseau",
+    "platform": "ABA Fusion (Langflow 1.7.0)"
+  },
+  "url": "https://stg-agentic.abafusion.ai/api/v1/webhook/4c5e6646-3a07-4518-b4d4-009d20fef2c8",
+  "capabilities": {
+    "streaming": false,
+    "push_notifications": true,
+    "state_transition_history": false
+  },
+  "default_input_modes": [
+    "application/json"
+  ],
+  "default_output_modes": [
+    "application/json"
+  ],
+  "skills": [
+    {
+      "id": "collecte_etat_reseau",
+      "name": "Collecte de l'etat reseau",
+      "description": "Interroge l'API ODRE eco2mix et structure les donnees en EtatReseau.",
+      "tags": [
+        "reseau",
+        "odre",
+        "eco2mix",
+        "meteo"
+      ],
+      "examples": [
+        "Recupere l'etat du reseau sur 15 jours"
+      ]
+    },
+    {
+      "id": "fallback_dataset_fige",
+      "name": "Fallback dataset fige",
+      "description": "Sert le profil horaire reel du 13/12/2025 quand l'API est injoignable.",
+      "tags": [
+        "fallback",
+        "resilience"
+      ],
+      "examples": [
+        "API ODRE en erreur 403"
+      ]
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "trigger": {
+        "type": "string",
+        "description": "webhook ou planification"
+      },
+      "jour": {
+        "type": "string",
+        "description": "date ciblee, optionnelle"
+      }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "from": {
+        "const": "agent_simulateur"
+      },
+      "action": {
+        "const": "etat_reseau"
+      },
+      "payload": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "horizon_heures": {
+            "type": "integer"
+          },
+          "fallback": {
+            "type": "boolean"
+          },
+          "profil_horaire_24h": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    }
+  },
+  "sends_to": [
+    "agent_calcul"
+  ],
+  "dependencies": [
+    {
+      "type": "http",
+      "name": "API ODRE eco2mix",
+      "url": "https://odre.opendatasoft.com/api/explore/v2.1/catalog/datasets/eco2mix-national-tr/records",
+      "optional": true,
+      "note": "403 depuis la plateforme : le fallback prend le relais"
+    }
+  ]
+}
