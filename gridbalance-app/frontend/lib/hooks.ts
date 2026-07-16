@@ -6,7 +6,15 @@
  * Aucun appel direct a la plateforme : tout passe par le backend FastAPI (lib/api.ts).
  */
 import useSWR, { useSWRConfig, type SWRConfiguration } from "swr";
-import { api, ApiError, type LiveState } from "./api";
+import {
+  api,
+  ApiError,
+  type Alarme,
+  type EmsSetpoint,
+  type LiveState,
+  type ScadaLive,
+  type Telemetrie,
+} from "./api";
 import type {
   Alert,
   Decision,
@@ -20,6 +28,15 @@ import type { AdminConfig, AdminUser, AuditEntry, DashboardKpis, Report } from "
 export const POLL_MS = 2000;
 /** Cadence plus lente pour les donnees peu volatiles. */
 export const SLOW_POLL_MS = 15000;
+/**
+ * Cadence du stockage : 5 minutes.
+ *
+ * Une batterie n'est pas une girouette. Son SoC bouge lentement, et le
+ * rafraichir toutes les 2 s ferait sauter les chiffres sans rien apprendre —
+ * pire, ca donnerait l'illusion d'une instabilite qui n'existe pas. On observe
+ * donc le rack au rythme auquel il change reellement.
+ */
+export const BATTERY_POLL_MS = 5 * 60 * 1000;
 
 /** Ne pas reessayer indefiniment sur une erreur d'autorisation. */
 const baseConfig: SWRConfiguration = {
@@ -48,6 +65,12 @@ export const KEYS = {
   audit: "/api/audit",
   adminUsers: "/api/admin/users",
   adminConfig: "/api/admin/config",
+  scadaLive: "/api/scada/live",
+  scadaEquipements: "/api/scada/equipements",
+  scadaHistorique: (id: string | undefined, hours: number) =>
+    `/api/scada/historique?hours=${hours}${id ? `&equipement_id=${id}` : ""}`,
+  scadaAlarmes: (actives: boolean) => `/api/scada/alarmes?actives=${actives}`,
+  emsConsignes: (hours: number) => `/api/ems/consignes?hours=${hours}`,
 } as const;
 
 /* --------------------------------------------------------------------- auth */
@@ -233,6 +256,50 @@ export function useAdminConfig() {
     baseConfig,
   );
   return { config: data, error, isLoading, mutate };
+}
+
+/* ---------------------------------------------------------------- SCADA / EMS */
+
+/**
+ * Etat courant du parc.
+ *
+ * `refresh` se choisit selon la grandeur observee, pas par principe : le vent
+ * change en secondes (2 s), un rack de batteries en minutes (BATTERY_POLL_MS).
+ */
+export function useScadaLive(refresh = POLL_MS) {
+  const { data, error, isLoading, mutate } = useSWR<ScadaLive, ApiError>(
+    KEYS.scadaLive,
+    () => api.scada.live(),
+    { ...baseConfig, refreshInterval: refresh, keepPreviousData: true },
+  );
+  return { live: data, error, isLoading, mutate };
+}
+
+export function useScadaHistorique(equipementId?: string, hours = 48, refresh = SLOW_POLL_MS) {
+  const { data, error, isLoading, mutate } = useSWR<Telemetrie[], ApiError>(
+    KEYS.scadaHistorique(equipementId, hours),
+    () => api.scada.historique(equipementId, hours),
+    { ...baseConfig, refreshInterval: refresh, keepPreviousData: true },
+  );
+  return { historique: data, error, isLoading, mutate };
+}
+
+export function useScadaAlarmes(actives = false) {
+  const { data, error, isLoading, mutate } = useSWR<Alarme[], ApiError>(
+    KEYS.scadaAlarmes(actives),
+    () => api.scada.alarmes(actives),
+    { ...baseConfig, refreshInterval: SLOW_POLL_MS },
+  );
+  return { alarmes: data, error, isLoading, mutate };
+}
+
+export function useEmsConsignes(hours = 48, refresh = SLOW_POLL_MS) {
+  const { data, error, isLoading, mutate } = useSWR<EmsSetpoint[], ApiError>(
+    KEYS.emsConsignes(hours),
+    () => api.ems.consignes(hours),
+    { ...baseConfig, refreshInterval: refresh, keepPreviousData: true },
+  );
+  return { consignes: data, error, isLoading, mutate };
 }
 
 /** Invalide plusieurs cles d'un coup apres une mutation. */

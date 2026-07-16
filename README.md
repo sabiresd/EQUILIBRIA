@@ -178,24 +178,105 @@ EQUILIBRIA/
 
 ---
 
-## 🚀 Démarrage
+## 🚀 Installation
+
+### Prérequis
+
+| | Version | Pourquoi |
+|---|---|---|
+| **Python** | 3.11+ | le code utilise la syntaxe `X \| None` |
+| **Node.js** | 18+ | Next.js 14 |
+| **MongoDB** | local ou [Atlas](https://www.mongodb.com/atlas) (gratuit) | persiste runs, décisions, météo, SCADA |
+
+### 1. Dépendances
 
 ```bash
-# 1. Régénérer les workflows et les agent cards
-python generer_flows_defi10.py
+# Backend + moteur (agent_simulation, agent_calcul, scada, ems)
+pip install -r gridbalance-app/backend/requirements.txt
 
-# 2. Importer les 4 JSON de workflows/ dans la plateforme,
-#    puis relever l'endpoint de chaque nœud Webhook
+# Frontend
+cd gridbalance-app/frontend && npm install && cd ../..
 
-# 3. Déclencher la chaîne complète
-curl -X POST "https://<plateforme>/api/v1/webhook/<id-agent-simulateur>" \
-     -H "Content-Type: application/json" \
-     -d '{"trigger": "planif_quotidienne"}'
-
-# 4. Tester l'Agent de Calcul isolément
-curl -X POST "https://<plateforme>/api/v1/webhook/<id-agent-calcul>" \
-     -H "Content-Type: application/json" \
-     --data-binary "@payload_test_calcul.json"
+# Optionnel — serveur MCP (outils des agents ABA Fusion)
+pip install -r gridbalance-mcp/requirements.txt
 ```
 
-> ℹ️ La plateforme régénère l'identifiant de chaque flow à l'import : après un réimport, mettez à jour les identifiants dans le générateur et relancez-le, afin que les URLs A2A restent cohérentes.
+### 2. Configuration
+
+```bash
+cp gridbalance-app/.env.example gridbalance-app/.env
+```
+
+Puis renseignez **`MONGO_URL`** dans `gridbalance-app/.env` :
+
+```ini
+MONGO_URL=mongodb://localhost:27017                     # MongoDB local
+MONGO_URL=mongodb+srv://user:pass@cluster.mongodb.net/  # Atlas
+```
+
+> ⚠️ **`MONGO_URL=memory`** (le défaut) lance le projet sans rien installer, mais la base
+> vit dans le process du backend : la météo ne peut pas y être ingérée, donc **la tuile
+> temps réel et les pages SCADA/EMS resteront vides**. Pour une démo complète, utilisez
+> un vrai MongoDB.
+
+### 3. Créer la base
+
+```bash
+python init_projet.py           # vérifie tout, puis remplit la base
+python init_projet.py --check   # diagnostic seul, n'écrit rien
+```
+
+Le script vérifie Python, les paquets, le `.env`, le dataset et la connexion **avant**
+d'écrire, puis :
+
+| Étape | Collection | Contenu |
+|---|---|---|
+| Météo | `weather` | 6 575 h NASA 2023 (depuis `Data2023.xlsx`) |
+| Équipements | `scada_telemetry` | 792 mesures (11 équipements × 72 h) |
+| | `ems_setpoints` | 72 consignes horaires |
+
+Les **index**, les **3 utilisateurs démo** et la **config** sont créés automatiquement
+au premier démarrage du backend — rien à faire.
+
+### 4. Lancer
+
+```bash
+# Terminal 1 — backend
+cd gridbalance-app/backend
+python -m uvicorn app.main:app --port 8000
+
+# Terminal 2 — frontend
+cd gridbalance-app/frontend
+npm run dev
+```
+
+→ **http://localhost:3000**
+
+| Compte | Mot de passe | Rôle |
+|---|---|---|
+| `operator@demo.ma` | `demo1234` | simuler, proposer un plan |
+| `supervisor@demo.ma` | `demo1234` | valider / rejeter |
+| `admin@demo.ma` | `demo1234` | tout + administration |
+
+---
+
+## 🔌 Workflows ABA Fusion *(optionnel)*
+
+Le dashboard fonctionne seul (`WF_MODE=stub` : les 4 agents sont simulés en interne).
+Pour brancher la plateforme agentique :
+
+```bash
+# 1. Importer les 4 JSON de workflows/ dans ABA Fusion,
+#    puis relever l'endpoint de chaque nœud Webhook
+
+# 2. Reporter les 4 URLs dans gridbalance-app/.env (WF1_URL ... WF4_URL)
+#    et passer WF_MODE=live
+
+# 3. Déclencher la chaîne complète
+python push_simulation.py --anchor now --seed 42
+```
+
+> ⚠️ **La plateforme régénère l'identifiant de chaque flow à l'import.** Après un
+> réimport, les anciennes URLs renvoient 404 et les liens A2A internes sont à
+> refaire dans l'UI. Une fois les flows configurés, **ne les réimportez plus** :
+> éditez-les à la souris.

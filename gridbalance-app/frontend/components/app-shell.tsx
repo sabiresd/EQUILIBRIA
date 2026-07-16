@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Activity,
+  BatteryCharging,
   BellRing,
   ClipboardList,
   FileBarChart,
@@ -15,6 +16,7 @@ import {
   PlayCircle,
   Settings,
   ShieldCheck,
+  Wind,
   X,
 } from "lucide-react";
 
@@ -52,6 +54,20 @@ const NAV: NavItem[] = [
     href: "/simulation",
     label: "Simulation",
     icon: PlayCircle,
+    roles: ["operator", "supervisor", "admin"],
+  },
+  // Couche SCADA : l'etat des machines. Placee avant les plans — on observe
+  // avant de decider.
+  {
+    href: "/eoliennes",
+    label: "Eoliennes",
+    icon: Wind,
+    roles: ["operator", "supervisor", "admin"],
+  },
+  {
+    href: "/batteries",
+    label: "Batteries",
+    icon: BatteryCharging,
     roles: ["operator", "supervisor", "admin"],
   },
   {

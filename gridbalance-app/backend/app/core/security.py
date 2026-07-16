@@ -42,6 +42,10 @@ PERMISSIONS: dict[Role, set[str]] = {
         "alert:read",
         "report:read",
         "audit:read",
+        # Couches basses : tout le monde peut OBSERVER les equipements et les
+        # consignes. Agir dessus reste hors perimetre (le SCADA est en lecture).
+        "scada:read",
+        "ems:read",
     },
     "supervisor": set(),  # complete ci-dessous
     "admin": set(),

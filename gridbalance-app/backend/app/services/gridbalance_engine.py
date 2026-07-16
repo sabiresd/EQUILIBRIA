@@ -22,13 +22,25 @@ if str(_REPO_ROOT) not in sys.path:
 
 import agent_calcul  # noqa: E402
 import agent_simulation  # noqa: E402
+import ems_simulation  # noqa: E402
 import facture_onee  # noqa: E402
+import scada_simulation  # noqa: E402
 
 simulate = agent_simulation.simulate
 compute = agent_calcul.compute
 battery_contribution = agent_calcul.battery_contribution
 load_facture = facture_onee.load_facture
 REPO_ROOT = _REPO_ROOT
+
+# Couches basses : le SCADA observe les equipements, l'EMS les pilote. Les agents
+# (au-dessus) ne voient qu'un parc agrege ; ces deux-la descendent a la machine.
+scada_snapshot = scada_simulation.scada_snapshot
+ems_consignes = ems_simulation.ems_consignes
+etat_courant = ems_simulation.etat_courant
+TURBINES = scada_simulation.TURBINES
+BATTERIES = scada_simulation.BATTERIES  # le rack, module par module
+BATTERIE = scada_simulation.BATTERIE  # l'enveloppe agregee (8 MWh / 2 MW)
+SOLAIRE = scada_simulation.SOLAIRE
 
 # Fonctions unitaires reutilisees par la tuile live (une heure a la fois).
 wind_power_mw = agent_simulation.wind_power_mw
@@ -61,4 +73,5 @@ def peek_payload(correlation_id: str) -> dict | None:
 __all__ = [
     "simulate", "compute", "battery_contribution", "load_facture", "REPO_ROOT",
     "stash_payload", "pop_payload", "peek_payload",
+    "scada_snapshot", "ems_consignes", "etat_courant",
 ]

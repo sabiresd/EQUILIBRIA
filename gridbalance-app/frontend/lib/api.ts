@@ -294,6 +294,132 @@ async function download(path: string, filename: string): Promise<void> {
 const Empty = z.any();
 
 /* ------------------------------------------------------------------- live */
+/* ---------------------------------------------------------- SCADA / EMS */
+/* Le SCADA remonte des equipements de natures differentes (eolienne, batterie,
+ * solaire) : un seul schema large, avec les champs specifiques en optionnel.
+ * Un schema par type obligerait le frontend a discriminer avant de valider. */
+export const TelemetrieSchema = z.object({
+  id: z.string().optional(),
+  equipement_id: z.string(),
+  nom: z.string(),
+  type: z.enum(["eolienne", "batterie", "solaire"]),
+  etat: z.string(),
+  /** Code couleur calcule par le SCADA : vert / orange / jaune / rouge / gris. */
+  couleur: z.enum(["vert", "orange", "jaune", "rouge", "gris"]).optional(),
+  puissance_mw: z.number(),
+  disponible: z.boolean(),
+  h_index: z.number().optional(),
+  ts_utc: z.string().optional(),
+  hour_local: z.number().optional(),
+  // eolienne / solaire
+  puissance_nominale_mw: z.number().optional(),
+  charge_pct: z.number().optional(),
+  vent_nacelle_ms: z.number().optional(),
+  vent_10m_ms: z.number().optional(),
+  /** Mesures NASA remontees telles quelles (boussole, humidite). */
+  vent_direction_deg: z.number().optional(),
+  humidite_pct: z.number().optional(),
+  rotor_rpm: z.number().optional(),
+  temperature_nacelle_c: z.number().optional(),
+  irradiance_wm2: z.number().optional(),
+  temperature_module_c: z.number().optional(),
+  // batterie
+  soc: z.number().optional(),
+  soc_pct: z.number().optional(),
+  p_max_mw: z.number().optional(),
+  energie_stockee_mwh: z.number().optional(),
+  capacite_mwh: z.number().optional(),
+  soh_pct: z.number().optional(),
+  cycles: z.number().optional(),
+  temperature_c: z.number().optional(),
+});
+
+export const AlarmeSchema = z.object({
+  id: z.string().optional(),
+  equipement_id: z.string(),
+  code: z.string(),
+  severite: z.enum(["info", "avertissement", "critique"]),
+  message: z.string(),
+  ts_utc: z.string(),
+  acquittee: z.boolean().default(false),
+  acquittee_par: z.string().nullable().optional(),
+  h_index: z.number().optional(),
+  apparue_le: z.string().nullable().optional(),
+  levee_le: z.string().nullable().optional(),
+  duree_h: z.number().nullable().optional(),
+});
+
+export const EmsBilanSchema = z.object({
+  demande_mw: z.number(),
+  production_renouvelable_mw: z.number(),
+  residuel_mw: z.number(),
+  batterie_mw: z.number(),
+  reseau_mw: z.number(),
+  depassement_mw: z.number(),
+  deficit_non_couvert_mw: z.number(),
+  soc: z.number(),
+  tarif_periode: z.string(),
+});
+
+export const EmsSetpointSchema = z.object({
+  id: z.string().optional(),
+  h_index: z.number(),
+  ts_utc: z.string(),
+  hour_local: z.number(),
+  bilan: EmsBilanSchema,
+  consignes: z.array(
+    z.object({
+      equipement_id: z.string(),
+      type: z.string(),
+      consigne_mw: z.number(),
+      motif: z.string(),
+      limite_mw: z.number().optional(),
+    }),
+  ),
+  contraintes: z.array(
+    z.object({
+      equipement_id: z.string(),
+      contrainte: z.string(),
+      detail: z.string(),
+    }),
+  ),
+  escalade_agents: z.boolean(),
+});
+
+export const ScadaLiveSchema = z.object({
+  display_now: z.string(),
+  grid_cap_mw: z.number(),
+  scada: z.object({
+    ts_utc: z.string(),
+    equipements: z.array(TelemetrieSchema),
+    alarmes: z.array(AlarmeSchema),
+    totaux: z.record(z.number()),
+  }),
+  ems: z.object({
+    bilan: EmsBilanSchema,
+    contraintes: z.array(z.object({}).passthrough()),
+    escalade_agents: z.boolean(),
+  }).passthrough(),
+});
+
+export const AckSchema = z.object({ acquittee: z.boolean(), id: z.string() });
+export const SeedResultSchema = z.object({
+  heures: z.number(),
+  telemetrie: z.number(),
+  alarmes: z.number(),
+  consignes: z.number(),
+  equipements: z.number().optional(),
+  soc_final: z.array(z.number()),
+  soc_final_moyen: z.number().optional(),
+  cycles: z.number(),
+});
+
+export type Telemetrie = z.infer<typeof TelemetrieSchema>;
+export type Alarme = z.infer<typeof AlarmeSchema>;
+export type EmsSetpoint = z.infer<typeof EmsSetpointSchema>;
+export type ScadaLive = z.infer<typeof ScadaLiveSchema>;
+export type SeedResult = z.infer<typeof SeedResultSchema>;
+
 export const LivePointSchema = z.object({
   h_index: z.number(),
   ts_utc: z.string(),
@@ -356,6 +482,33 @@ export const api = {
       request(`/api/live?history=${history}`, LiveStateSchema),
     control: (payload: { speed?: number; paused?: boolean }): Promise<LiveState> =>
       request("/api/live/control", LiveStateSchema, { method: "POST", body: payload }),
+  },
+
+  /* --------------------------------------------------- SCADA (observer) */
+  scada: {
+    live: (): Promise<ScadaLive> => request("/api/scada/live", ScadaLiveSchema),
+    equipements: (): Promise<Telemetrie[]> =>
+      request("/api/scada/equipements", z.array(TelemetrieSchema)),
+    historique: (equipementId?: string, hours = 48): Promise<Telemetrie[]> =>
+      request(
+        `/api/scada/historique?hours=${hours}` +
+          (equipementId ? `&equipement_id=${equipementId}` : ""),
+        z.array(TelemetrieSchema),
+      ),
+    alarmes: (actives = false): Promise<Alarme[]> =>
+      request(`/api/scada/alarmes?actives=${actives}`, z.array(AlarmeSchema)),
+    ack: (id: string): Promise<{ acquittee: boolean; id: string }> =>
+      request(`/api/scada/alarmes/${id}/ack`, AckSchema, { method: "POST" }),
+    seed: (hours = 72): Promise<SeedResult> =>
+      request(`/api/scada/seed?hours=${hours}&reset=true`, SeedResultSchema, {
+        method: "POST",
+      }),
+  },
+
+  /* ------------------------------------------------------- EMS (piloter) */
+  ems: {
+    consignes: (hours = 48): Promise<EmsSetpoint[]> =>
+      request(`/api/ems/consignes?hours=${hours}`, z.array(EmsSetpointSchema)),
   },
 
   /* ------------------------------------------------------------------ runs */

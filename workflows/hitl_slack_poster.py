@@ -1,29 +1,39 @@
 # =============================================================================
-# HITL SLACK - POSTER (Agent Plan -> Slack)   [mode Bot Token + chat.postMessage]
-# A coller dans le noeud Prompt Template qui alimente le Python Interpreter.
-# Poste le plan dans le canal avec deux boutons : Valider (vert) / Refuser
-# (rouge). La valeur des boutons = correlation_id, relu ensuite par l'Agent 4.
+# HITL SLACK - POSTER AUTONOME (Agent 3 Plan -> Slack)
 #
-# Chaque execution poste une ALERTE NEUVE, horodatee a l'heure locale.
+# A coller dans le noeud Prompt Template "HITL : poster le plan sur Slack",
+# qui alimente le Python Interpreter "Executer le post Slack".
 #
-# A REMPLIR :
-#   SLACK_BOT_TOKEN : jeton "Bot User OAuth Token" (xoxb-...) de votre app Slack.
-#   CHANNEL_ID      : deja rempli (#hitl_projet_fin_specialisation).
-# Le bot doit avoir le scope chat:write ET etre invite dans le canal.
+# CE QUE FAIT CE SCRIPT
+#   1. lit le payload A2A recu de l'Agent Calcul (variable payload)
+#   2. en DERIVE la strategie et le cout, a partir du deficit horaire reel
+#   3. poste une alerte NEUVE dans Slack, horodatee, avec Valider / Refuser
 #
-# IMPORTANT - Global Imports du Python Interpreter :
-#   requests,json,datetime,re
+# POURQUOI DERIVER PLUTOT QUE DEMANDER AU LLM
+#   Un LLM invente les chiffres : il a produit "3850 MAD" et un correlation_id
+#   fantaisiste, ce qui cassait le fil (le callback ne retrouvait plus le run).
+#   Ici les documents donnent la REGLE (ordre des leviers, tarifs) et les
+#   donnees donnent les CHIFFRES. Le LLM ne touche plus a rien de tout ca.
 #
-# DEUX variables sont injectees par le Prompt Template :
-#   {plan}     -> la sortie de l'Agent Plan (le plan redige par le LLM)
-#   {cid_reel} -> le payload A2A RECU du webhook (Agent 2).
+# A REMPLIR
+#   SLACK_BOT_TOKEN : le "Bot User OAuth Token" (xoxb-...) de votre app Slack.
 #
-# Pourquoi {cid_reel} ? Le LLM qui redige le plan INVENTE volontiers un
-# correlation_id. Un identifiant invente casse le fil : le callback Slack ne
-# retrouve plus le run, et le dashboard ne peut plus relier la decision. On
-# prend donc l'identifiant REEL transporte par la chaine A2A, et le plan du LLM
-# ne sert que de repli. Brancher la sortie du webhook sur {cid_reel} : peu
-# importe le format, on extrait l'UUID.
+# DANS LE NOEUD Python Interpreter
+#   Global Imports :  requests,json,datetime,re
+#
+# BRANCHEMENT
+#   La variable payload doit recevoir la sortie du WEBHOOK de l'Agent 3
+#   (le message A2A envoye par l'Agent Calcul, qui contient le detail horaire).
+#
+# NOTE : le nom de la variable n'apparait entre accolades qu'A UN SEUL ENDROIT
+# (la ligne "recu = ..."), et jamais dans un commentaire : le Prompt Template
+# substitue partout, et un JSON multi-ligne injecte dans un commentaire ferait
+# echouer le script. Pour la meme raison, aucune accolade litterale ici : on
+# utilise dict() et chr(123). Meme contrainte que le script de callback.
+#
+# PROVISOIRE : duplique la logique de gridbalance-mcp/outil_plan.py. A remplacer
+# par un appel aux outils MCP (rechercher_strategie_rag + poster_plan_hitl) des
+# que le tunnel sera en place pour l'Agent 4.
 # =============================================================================
 import json
 import re
@@ -34,43 +44,118 @@ import requests
 SLACK_BOT_TOKEN = "xoxb-REMPLACER-PAR-VOTRE-BOT-TOKEN"
 CHANNEL_ID = "C0BHLKL0GA0"
 
-# --- 1. Le plan redige par l'Agent Plan -------------------------------------
-plan_brut = """{plan}"""
-try:
-    plan = json.loads(plan_brut)
-except Exception:
-    plan = {"resume": plan_brut}
+# Tarifs ONEE MT en MAD/MWh (documents/arbitrage_cout.md : creuse 0,65 /
+# normale 0,90 / pointe 1,40 MAD/kWh).
+TARIF_CREUSE = 650.0
+# Penalite de depassement de la puissance souscrite, MAD/MWh. Valeur de
+# DEMONSTRATION : le document la decrit sans la chiffrer. C'est la reference
+# du "ne rien faire" : le deficit depasse le plafond, donc sans plan il serait
+# facture en depassement.
+PENALITE_DEPASSEMENT = 2500.0
 
-# --- 2. L'identifiant REEL, extrait du payload A2A --------------------------
-source_cid = """{cid_reel}"""
-UUID_RE = r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
-trouve = re.search(UUID_RE, source_cid or "")
-correlation_id = trouve.group(0) if trouve else str(plan.get("correlation_id", "inconnu"))
-cid_suspect = not re.fullmatch(UUID_RE, correlation_id or "")
+OUVRANTE = chr(123)
 
-# --- 3. Le message ----------------------------------------------------------
+recu = """{payload}"""
+
+# --- 1. Retrouver le resultat de l'Agent Calcul ------------------------------
+# Le message A2A est un texte : le JSON du calcul, suivi d'un JSON d'enveloppe.
+# On balaie les objets JSON et on garde celui qui porte les donnees du calcul.
+resultat = dict()
+texte_recu = (recu or "").strip()
+position = texte_recu.find(OUVRANTE)
+while position >= 0:
+    try:
+        candidat, _fin = json.JSONDecoder().raw_decode(texte_recu[position:])
+        porte_le_calcul = isinstance(candidat, dict) and (
+            "hourly" in candidat or "totals" in candidat or "deficit_summary" in candidat
+        )
+        if porte_le_calcul:
+            resultat = candidat
+            break
+    except Exception:
+        pass
+    position = texte_recu.find(OUVRANTE, position + 1)
+
+# --- 2. Le correlation_id REEL, jamais celui d'un LLM ------------------------
+correlation_id = str(resultat.get("correlation_id") or "").strip()
+if not correlation_id:
+    trouve = re.search("[0-9a-fA-F]+-[0-9a-fA-F]+-[0-9a-fA-F]+-[0-9a-fA-F]+-[0-9a-fA-F]+",
+                       texte_recu)
+    correlation_id = trouve.group(0) if trouve else "inconnu"
+
+# --- 3. Repartir le deficit reel par periode tarifaire -----------------------
+# Sur un pas d'une heure, les MW valent des MWh.
+mwh = dict(creuse=0.0, normale=0.0, pointe=0.0)
+heures = dict(creuse=0, normale=0, pointe=0)
+for point in resultat.get("hourly") or []:
+    deficit = float(point.get("deficit_mw") or 0.0)
+    if deficit <= 0:
+        continue
+    periode = point.get("tariff_period", "normale")
+    if periode not in mwh:
+        periode = "normale"
+    mwh[periode] = mwh[periode] + deficit
+    heures[periode] = heures[periode] + 1
+
+mwh_pointe = mwh["pointe"]
+mwh_hors_pointe = mwh["creuse"] + mwh["normale"]
+h_pointe = heures["pointe"]
+h_hors_pointe = heures["creuse"] + heures["normale"]
+total_mwh = mwh_pointe + mwh_hors_pointe
+total_h = h_pointe + h_hors_pointe
+
+# Repli : pas de detail horaire recu -> on garde au moins le resume.
+if total_mwh == 0:
+    resume = resultat.get("deficit_summary") or resultat.get("totals") or dict()
+    total_mwh = float(resume.get("total_deficit_mwh") or 0.0)
+    total_h = int(resume.get("hours_in_deficit") or 0)
+    mwh_hors_pointe = total_mwh
+    h_hors_pointe = total_h
+
+# --- 4. Strategie et cout, derives (ordre des leviers du document) -----------
+#   1. decalage de charge : le deficit de POINTE est reporte en creuse
+#   2. delestage non critique : le reste ; n'achete pas d'energie
+#   3. depassement : dernier recours, sert ici de reference "sans plan"
+cout_plan = round(mwh_pointe * TARIF_CREUSE, 2)
+cout_sans_plan = round(total_mwh * PENALITE_DEPASSEMENT, 2)
+economie = round(cout_sans_plan - cout_plan, 2)
+
+phrases = []
+if mwh_pointe > 0:
+    phrases.append("Decalage de charge sur " + str(h_pointe) + " h de pointe ("
+                   + ("%.2f" % mwh_pointe) + " MWh reportes en creuse)")
+if mwh_hors_pointe > 0:
+    phrases.append("delestage des charges non critiques sur " + str(h_hors_pointe)
+                   + " h (" + ("%.2f" % mwh_hors_pointe) + " MWh)")
+if not phrases:
+    phrases.append("Aucun deficit a couvrir")
+strategie = " ; puis ".join(phrases) + " ; hopital et station d'eau preserves."
+
+# --- 5. Le message ----------------------------------------------------------
 horodatage = datetime.now(timezone(timedelta(hours=1))).strftime("%d/%m/%Y a %H:%M")
-resume = plan.get("strategie_recommandee") or plan.get("levier_retenu") or "Plan de reequilibrage"
-cout = plan.get("cout_estime_mad", plan.get("estimated_cost", ""))
-citations = plan.get("citations", [])
 
-texte = "*PLAN DE REEQUILIBRAGE - VALIDATION REQUISE*\n"
-texte += "Heure : " + horodatage + " (heure locale)\n"
-texte += "correlation_id : " + correlation_id + "\n"
-texte += "Strategie : " + str(resume) + "\n"
-if cout != "":
-    texte += "Cout estime : " + str(cout) + " MAD\n"
-if citations:
-    texte += "Sources : " + ", ".join(c.get("doc", "") for c in citations[:3]) + "\n"
-if cid_suspect:
-    texte += ("\n:warning: _correlation_id non conforme : {cid_reel} n'a "
-              "probablement pas ete branche sur la sortie du webhook._\n")
+corps = "*PLAN DE REEQUILIBRAGE - VALIDATION REQUISE*\n"
+corps += "Heure : " + horodatage + " (heure locale)\n"
+corps += "correlation_id : " + correlation_id + "\n"
+corps += ("Deficit : " + ("%.2f" % total_mwh) + " MWh sur " + str(total_h)
+          + " h (pointe : " + ("%.2f" % mwh_pointe) + " MWh)\n")
+corps += "Strategie : " + strategie + "\n"
+# Un plan 100 % delestage coute 0 MAD : sans la reference "sans plan", le
+# chiffre passerait pour une panne.
+corps += ("Cout estime : " + ("%.2f" % cout_plan) + " MAD (evite "
+          + ("%.2f" % economie) + " MAD de depassement)\n")
+if mwh_hors_pointe > 0:
+    corps += ("Energie non distribuee (delestage) : "
+              + ("%.2f" % mwh_hors_pointe) + " MWh\n")
+if not resultat:
+    corps += ("\n:warning: _Payload de calcul introuvable : verifier que "
+              "la variable payload recoit bien la sortie du webhook._\n")
 
 message = dict()
 message["channel"] = CHANNEL_ID
 message["text"] = "Plan de reequilibrage - validation requise (" + horodatage + ")"
 message["blocks"] = [
-    dict(type="section", text=dict(type="mrkdwn", text=texte)),
+    dict(type="section", text=dict(type="mrkdwn", text=corps)),
     dict(type="actions", elements=[
         dict(type="button", text=dict(type="plain_text", text="Valider"),
              style="primary", action_id="hitl_valider", value=correlation_id),
@@ -79,13 +164,16 @@ message["blocks"] = [
     ]),
 ]
 
-resp = requests.post(
+reponse = requests.post(
     "https://slack.com/api/chat.postMessage",
-    headers={"Authorization": "Bearer " + SLACK_BOT_TOKEN,
-             "Content-Type": "application/json; charset=utf-8"},
+    headers=dict(Authorization="Bearer " + SLACK_BOT_TOKEN,
+                 **dict([("Content-Type", "application/json; charset=utf-8")])),
     json=message, timeout=30,
 )
-data = resp.json()
-print("Slack HITL: ok=" + str(data.get("ok")) + " | cid=" + correlation_id
+data = reponse.json()
+print("Slack HITL: ok=" + str(data.get("ok"))
+      + " | cid=" + correlation_id
+      + " | deficit=" + ("%.2f" % total_mwh) + " MWh"
+      + " | cout=" + ("%.2f" % cout_plan) + " MAD"
       + " | poste a " + horodatage
       + (" | erreur=" + str(data.get("error")) if not data.get("ok") else ""))

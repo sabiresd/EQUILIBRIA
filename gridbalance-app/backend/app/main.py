@@ -23,7 +23,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.core.config import settings
 from app.core.db import init_db
 from app.core.security import ACCESS_COOKIE, csrf_guard, decode_token
-from app.routers import auth, decisions, ops, runs
+from app.routers import assets, auth, decisions, ops, runs
 from app.services.mailer import scheduler
 from contracts.contracts import DISCLAIMER
 
@@ -134,6 +134,7 @@ app.include_router(auth.router)
 app.include_router(runs.router)
 app.include_router(decisions.router)
 app.include_router(ops.router)
+app.include_router(assets.router)
 
 
 @app.get("/")

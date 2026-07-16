@@ -125,6 +125,9 @@ def _point(doc: dict) -> dict:
         "wind_ms": round(float(doc["ws10m"]), 2),
         "ghi": round(float(doc["irr"]), 1),
         "temp_c": round(float(doc["t2m"]), 1),
+        # Mesures NASA deja ingerees : le SCADA les affiche (boussole, humidite).
+        "humidite_pct": round(float(doc.get("rh2m") or 0.0), 1),
+        "vent_direction_deg": round(float(doc.get("wd10m") or 0.0), 1),
         "prod_wind_mw": wind,
         "prod_solar_mw": solar,
         "prod_total_mw": round(wind + solar, 3),
