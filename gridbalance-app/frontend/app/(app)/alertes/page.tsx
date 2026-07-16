@@ -155,7 +155,7 @@ function AlertRules() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ul className="divide-y divide-white/[0.05]">
+          <ul className="divide-y divide-hairline/[0.05]">
             {RULES.map((rule) => (
               <li key={rule} className="flex items-start justify-between gap-4 py-3.5">
                 <div className="min-w-0">
@@ -279,12 +279,12 @@ function AlertList() {
                   key={alert.id}
                   className={`rounded-lg border px-4 py-3 ${
                     acked
-                      ? "border-white/[0.06] bg-white/[0.015] opacity-75"
+                      ? "border-hairline/[0.06] bg-hairline/[0.015] opacity-75"
                       : alert.severity === "critical"
                         ? "border-danger/30 bg-danger/[0.05]"
                         : alert.severity === "warning"
                           ? "border-warn/25 bg-warn/[0.04]"
-                          : "border-white/[0.07] bg-white/[0.02]"
+                          : "border-hairline/[0.07] bg-hairline/[0.02]"
                   }`}
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">

@@ -44,7 +44,7 @@ export function CitationList({ citations }: { citations: Citation[] }) {
         aria-controls={id}
         className={cn(
           "flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors",
-          "hover:bg-white/[0.05] hover:text-foreground",
+          "hover:bg-hairline/[0.05] hover:text-foreground",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-base-800",
         )}
       >
@@ -63,7 +63,7 @@ export function CitationList({ citations }: { citations: Citation[] }) {
           {citations.map((c, i) => (
             <li
               key={`${c.doc}-${c.page}-${i}`}
-              className="rounded-md border border-white/[0.07] bg-white/[0.02] p-2.5"
+              className="rounded-md border border-hairline/[0.07] bg-hairline/[0.02] p-2.5"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="truncate font-mono text-[11px] text-emerald-300">{c.doc}</span>
@@ -101,7 +101,7 @@ function ActionRow({ action }: { action: PlanAction }) {
         : `H+${hours[0]} → H+${hours[hours.length - 1]} (${hours.length} h)`;
 
   return (
-    <li className="rounded-md border border-white/[0.06] bg-white/[0.02] p-2.5">
+    <li className="rounded-md border border-hairline/[0.06] bg-hairline/[0.02] p-2.5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
           <Zap className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />
@@ -166,7 +166,7 @@ export function PlanCard({
               className={cn(
                 "flex h-9 w-9 items-center justify-center rounded-lg text-base font-bold",
                 selected
-                  ? "bg-emerald-500 text-base-900"
+                  ? "bg-emerald-500 text-ink"
                   : "bg-emerald-500/12 text-emerald-300 ring-1 ring-emerald-500/25",
               )}
               aria-hidden="true"
@@ -206,7 +206,7 @@ export function PlanCard({
       <CardContent className="flex flex-1 flex-col gap-4">
         {/* Metriques */}
         <dl className="grid grid-cols-3 gap-2">
-          <div className="rounded-md bg-white/[0.03] p-2">
+          <div className="rounded-md bg-hairline/[0.03] p-2">
             <dt className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
               <Coins className="h-3 w-3" aria-hidden="true" />
               Cout
@@ -215,7 +215,7 @@ export function PlanCard({
               {fmtMAD(plan.estimated_cost)}
             </dd>
           </div>
-          <div className="rounded-md bg-white/[0.03] p-2">
+          <div className="rounded-md bg-hairline/[0.03] p-2">
             <dt className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
               <Scale className="h-3 w-3" aria-hidden="true" />
               Equite
@@ -224,7 +224,7 @@ export function PlanCard({
               {fmtPercent(plan.fairness_score, 0)}
             </dd>
           </div>
-          <div className="rounded-md bg-white/[0.03] p-2">
+          <div className="rounded-md bg-hairline/[0.03] p-2">
             <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">Couvert</dt>
             <dd className="mt-0.5 font-mono text-sm font-semibold tabular-nums text-foreground">
               {fmtNumber(plan.covered_deficit_mwh, 0)}
@@ -250,7 +250,7 @@ export function PlanCard({
         </div>
 
         {/* Citations */}
-        <div className="mt-auto border-t border-white/[0.06] pt-3">
+        <div className="mt-auto border-t border-hairline/[0.06] pt-3">
           <CitationList citations={plan.citations} />
         </div>
 

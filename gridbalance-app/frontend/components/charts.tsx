@@ -26,8 +26,30 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { AXIS_PROPS, CHART, dayTicks } from "@/lib/chart-theme";
+import { CHART, CHART_LIGHT, axisProps, dayTicks } from "@/lib/chart-theme";
 import { cn, fmtHorizonHour, fmtNumber } from "@/lib/utils";
+
+/**
+ * Chrome du graphique accorde au theme.
+ *
+ * La source de verite est la classe `dark` de <html> (posee par le bouton de
+ * bascule) : on l'observe pour repeindre grille, axes et curseur au clic. Les
+ * couleurs de SERIES, elles, ne bougent jamais — la couleur suit l'entite.
+ */
+function useChartChrome() {
+  const [dark, setDark] = React.useState(true);
+
+  React.useEffect(() => {
+    const root = document.documentElement;
+    const sync = () => setDark(root.classList.contains("dark"));
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+
+  return dark ? CHART : CHART_LIGHT;
+}
 
 /* -------------------------------------------------------------------------- */
 /*                                  Ossature                                   */
@@ -86,8 +108,8 @@ export function ChartCard<T>({
               onClick={() => setView((v) => (v === "chart" ? "table" : "chart"))}
               aria-pressed={view === "table"}
               className={cn(
-                "inline-flex h-8 items-center gap-1.5 rounded-md border border-white/12 px-2.5 text-xs text-muted-foreground",
-                "transition-colors hover:bg-white/[0.06] hover:text-foreground",
+                "inline-flex h-8 items-center gap-1.5 rounded-md border border-hairline/12 px-2.5 text-xs text-muted-foreground",
+                "transition-colors hover:bg-hairline/[0.06] hover:text-foreground",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               )}
             >
@@ -111,7 +133,7 @@ export function ChartCard<T>({
         {view === "chart" || !hasTable ? (
           children
         ) : (
-          <div className="max-h-[340px] overflow-y-auto rounded-lg border border-white/[0.06]">
+          <div className="max-h-[340px] overflow-y-auto rounded-lg border border-hairline/[0.06]">
             <Table>
               <TableHeader className="sticky top-0 bg-base-800">
                 <TableRow>
@@ -132,7 +154,7 @@ export function ChartCard<T>({
                 ))}
               </TableBody>
             </Table>
-            <p className="border-t border-white/[0.06] px-4 py-2 text-xs text-muted-foreground">
+            <p className="border-t border-hairline/[0.06] px-4 py-2 text-xs text-muted-foreground">
               Echantillonnage : une ligne toutes les {tableSample} heures.
             </p>
           </div>
@@ -170,7 +192,7 @@ function GridTooltip({
   const h = typeof label === "number" ? label : Number(label);
 
   return (
-    <div className="rounded-lg border border-white/12 bg-base-900/95 px-3 py-2 shadow-panel backdrop-blur">
+    <div className="rounded-lg border border-hairline/12 bg-base-900/95 px-3 py-2 shadow-panel backdrop-blur">
       <p className="mb-1.5 text-xs font-semibold text-foreground">
         H+{h} <span className="font-normal text-muted-foreground">· {fmtHorizonHour(h)}</span>
       </p>
@@ -223,6 +245,10 @@ export function ProductionDemandChart({
   height?: number;
   onSelectHour?: (h: number) => void;
 }) {
+  // Chrome accorde au theme (grille, axes, curseur). Masque volontairement
+  // l'import du meme nom : les usages `CHART.*` ci-dessous suivent le theme.
+  // eslint-disable-next-line @typescript-eslint/no-shadow
+  const CHART = useChartChrome();
   const maxH = data.length ? data[data.length - 1].h : 359;
 
   return (
@@ -255,7 +281,7 @@ export function ProductionDemandChart({
             domain={[0, maxH]}
             ticks={dayTicks(maxH)}
             tickFormatter={(h: number) => `J+${Math.floor(h / 24)}`}
-            {...AXIS_PROPS}
+            {...axisProps(CHART)}
             label={{
               value: "Horizon — 360 h (15 jours)",
               position: "insideBottom",
@@ -265,7 +291,7 @@ export function ProductionDemandChart({
             }}
           />
           <YAxis
-            {...AXIS_PROPS}
+            {...axisProps(CHART)}
             width={54}
             label={{
               value: "MW",
@@ -383,6 +409,8 @@ export function SingleSeriesChart<T extends { h: number }>({
   windlessWindow?: { start_h: number; end_h: number } | null;
   referenceLine?: { y: number; label: string; color?: string };
 }) {
+  // eslint-disable-next-line @typescript-eslint/no-shadow -- chrome du theme
+  const CHART = useChartChrome();
   const maxH = data.length ? data[data.length - 1].h : 359;
   const gradId = `grad-${dataKey}-${color.replace("#", "")}`;
 
@@ -395,9 +423,9 @@ export function SingleSeriesChart<T extends { h: number }>({
         domain={[0, maxH]}
         ticks={dayTicks(maxH, 48)}
         tickFormatter={(h: number) => `J+${Math.floor(h / 24)}`}
-        {...AXIS_PROPS}
+        {...axisProps(CHART)}
       />
-      <YAxis {...AXIS_PROPS} width={48} domain={domain ?? ["auto", "auto"]} />
+      <YAxis {...axisProps(CHART)} width={48} domain={domain ?? ["auto", "auto"]} />
       {windlessWindow ? (
         <ReferenceArea
           x1={windlessWindow.start_h}
@@ -507,6 +535,8 @@ export function NaiveVsLookaheadChart({
   data: ComparisonPoint[];
   height?: number;
 }) {
+  // eslint-disable-next-line @typescript-eslint/no-shadow -- chrome du theme
+  const CHART = useChartChrome();
   const maxH = data.length ? data[data.length - 1].h : 359;
 
   return (
@@ -520,10 +550,10 @@ export function NaiveVsLookaheadChart({
             domain={[0, maxH]}
             ticks={dayTicks(maxH, 48)}
             tickFormatter={(h: number) => `J+${Math.floor(h / 24)}`}
-            {...AXIS_PROPS}
+            {...axisProps(CHART)}
           />
           <YAxis
-            {...AXIS_PROPS}
+            {...axisProps(CHART)}
             width={70}
             tickFormatter={(v: number) => `${Math.round(v / 1000)}k`}
             label={{

@@ -91,7 +91,7 @@ export function LiveTile() {
               />
             </span>
             <div>
-              <p className="text-xs uppercase tracking-wide text-white/50">
+              <p className="text-xs uppercase tracking-wide text-hairline/50">
                 Reseau en temps reel {live?.paused ? "· en pause" : `· x${fmtNumber(live?.speed ?? 1, 0)}`}
               </p>
               <p className="font-mono text-lg font-semibold tabular-nums">
@@ -102,7 +102,7 @@ export function LiveTile() {
 
           {/* Solde net : le chiffre qui bouge */}
           <div className="text-right">
-            <p className="text-xs uppercase tracking-wide text-white/50">
+            <p className="text-xs uppercase tracking-wide text-hairline/50">
               {deficit ? "Deficit instantane" : "Marge de production"}
             </p>
             <p
@@ -123,7 +123,7 @@ export function LiveTile() {
             prod={(live?.history ?? []).map((p) => p.prod_total_mw)}
             demand={(live?.history ?? []).map((p) => p.demand_mw)}
           />
-          <div className="mt-1 flex justify-between text-[11px] text-white/40">
+          <div className="mt-1 flex justify-between text-[11px] text-hairline/40">
             <span>
               <span className="text-emerald-400">—</span> production &nbsp;
               <span className="text-violet-400">—</span> demande &nbsp;(48 dernieres heures)
@@ -156,8 +156,8 @@ function Metric({
   value: string;
 }) {
   return (
-    <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2">
-      <p className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-white/45">
+    <div className="rounded-lg border border-hairline/[0.06] bg-hairline/[0.02] px-3 py-2">
+      <p className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-hairline/45">
         <span className="text-emerald-400/70">{icon}</span>
         {label}
       </p>

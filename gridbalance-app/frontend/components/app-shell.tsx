@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DisclaimerFooter } from "@/components/disclaimer";
 import { AlertWatcher } from "@/components/alert-watcher";
 import { StatusDot } from "@/components/workflow-status";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { api } from "@/lib/api";
 import { useAlerts, useHealth, useMe, useValidations, usePermissions } from "@/lib/hooks";
 import { ROLE_LABELS, type Role } from "@/lib/types";
@@ -190,7 +191,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-base-900",
               active
                 ? "bg-emerald-500/12 font-medium text-emerald-200"
-                : "text-muted-foreground hover:bg-white/[0.05] hover:text-foreground",
+                : "text-muted-foreground hover:bg-hairline/[0.05] hover:text-foreground",
             )}
           >
             <span className="flex min-w-0 items-center gap-3">
@@ -232,7 +233,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* -------------------------------------------------- barre laterale */}
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-white/[0.07] bg-base-900/95 backdrop-blur-md transition-transform lg:static lg:translate-x-0",
+            "fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-hairline/[0.07] bg-base-900/95 backdrop-blur-md transition-transform lg:static lg:translate-x-0",
             mobileOpen ? "translate-x-0" : "-translate-x-full",
           )}
         >
@@ -252,7 +253,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               onClick={() => setMobileOpen(false)}
-              className="rounded-md p-1.5 text-muted-foreground hover:bg-white/[0.06] lg:hidden"
+              className="rounded-md p-1.5 text-muted-foreground hover:bg-hairline/[0.06] lg:hidden"
               aria-label="Fermer le menu"
             >
               <X className="h-5 w-5" aria-hidden="true" />
@@ -268,14 +269,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {nav}
 
           {/* Carte utilisateur */}
-          <div className="border-t border-white/[0.07] p-3">
+          <div className="border-t border-hairline/[0.07] p-3">
             {isLoading && !user ? (
               <div className="space-y-2 p-2">
                 <Skeleton className="h-4 w-28" />
                 <Skeleton className="h-3 w-20" />
               </div>
             ) : user ? (
-              <div className="rounded-lg bg-white/[0.03] p-3">
+              <div className="rounded-lg bg-hairline/[0.03] p-3">
                 <div className="flex items-center gap-3">
                   <span
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-sm font-semibold text-emerald-300"
@@ -317,11 +318,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* ------------------------------------------------------ contenu */}
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-white/[0.07] bg-base-900/80 px-4 backdrop-blur-md sm:px-6">
+          <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-hairline/[0.07] bg-base-900/80 px-4 backdrop-blur-md sm:px-6">
             <button
               type="button"
               onClick={() => setMobileOpen(true)}
-              className="rounded-md p-2 text-muted-foreground hover:bg-white/[0.06] lg:hidden"
+              className="rounded-md p-2 text-muted-foreground hover:bg-hairline/[0.06] lg:hidden"
               aria-label="Ouvrir le menu"
               aria-expanded={mobileOpen}
             >
@@ -329,6 +330,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </button>
 
             <div className="ml-auto flex items-center gap-3">
+              <ThemeToggle />
               <GlobalHealthPill />
             </div>
           </header>

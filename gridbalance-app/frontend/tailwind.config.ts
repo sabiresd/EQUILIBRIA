@@ -15,14 +15,28 @@ const config: Config = {
     },
     extend: {
       colors: {
-        /* Charte GridBalance AI Morocco */
+        /* Charte GridBalance AI Morocco.
+         *
+         * Les SURFACES sont pilotees par variables CSS : elles basculent entre
+         * clair et sombre (voir globals.css, :root vs .dark). `<alpha-value>`
+         * preserve les opacites du type `bg-base-900/80`.
+         */
         base: {
-          DEFAULT: "#040e1b", // fond principal
-          900: "#040e1b", // le plus sombre = fond de page (texte sur boutons emeraude)
-          800: "#071627", // surface des cartes (= surface de reference des graphiques)
-          700: "#0a1e33",
-          600: "#0e2740",
+          DEFAULT: "hsl(var(--base-900) / <alpha-value>)",
+          900: "hsl(var(--base-900) / <alpha-value>)", // fond de page
+          800: "hsl(var(--base-800) / <alpha-value>)", // surface des cartes
+          700: "hsl(var(--base-700) / <alpha-value>)",
+          600: "hsl(var(--base-600) / <alpha-value>)",
         },
+
+        /* Encre FIXE, jamais inversee : texte/icone pose sur un aplat emeraude.
+         * L'emeraude reste identique dans les deux themes, donc son texte aussi
+         * (sinon on perdrait le contraste en mode clair). */
+        ink: "#040e1b",
+
+        /* Filet : bordures et voiles subtils. Blanc sur fond sombre, encre sur
+         * fond clair -> les 100+ `border-hairline/[0.07]` suivent le theme. */
+        hairline: "rgb(var(--hairline) / <alpha-value>)",
         emerald: {
           DEFAULT: "#17c884",
           50: "#e7fbf3",
@@ -88,7 +102,8 @@ const config: Config = {
       },
       boxShadow: {
         glow: "0 0 0 1px rgba(23,200,132,0.25), 0 8px 30px -12px rgba(23,200,132,0.35)",
-        panel: "0 1px 0 0 rgba(255,255,255,0.04) inset, 0 20px 40px -24px rgba(0,0,0,0.8)",
+        // Suit le theme : ombre portee franche en clair, profonde en sombre.
+        panel: "var(--shadow-panel)",
       },
       keyframes: {
         "accordion-down": {

@@ -212,7 +212,7 @@ function UserDialog({
             ) : null}
           </div>
 
-          <div className="flex items-center justify-between rounded-lg border border-white/[0.07] bg-white/[0.02] px-3 py-2.5">
+          <div className="flex items-center justify-between rounded-lg border border-hairline/[0.07] bg-hairline/[0.02] px-3 py-2.5">
             <Label htmlFor="u-active" className="cursor-pointer">
               Compte actif
             </Label>
@@ -557,7 +557,7 @@ function ConfigPanel() {
               }
             />
           </div>
-          <div className="flex items-center justify-between rounded-lg border border-white/[0.07] bg-white/[0.02] px-3 py-2.5 sm:col-span-2">
+          <div className="flex items-center justify-between rounded-lg border border-hairline/[0.07] bg-hairline/[0.02] px-3 py-2.5 sm:col-span-2">
             <Label htmlFor="smtp-tls" className="cursor-pointer">
               Chiffrement TLS
             </Label>
@@ -617,7 +617,7 @@ function ConfigPanel() {
       </Card>
 
       {/* Barre d'enregistrement */}
-      <div className="sticky bottom-4 flex justify-end gap-2 rounded-xl border border-white/[0.07] bg-base-800/90 p-3 backdrop-blur">
+      <div className="sticky bottom-4 flex justify-end gap-2 rounded-xl border border-hairline/[0.07] bg-base-800/90 p-3 backdrop-blur">
         <Button variant="ghost" onClick={() => config && setDraft(config)} disabled={!dirty}>
           Annuler les modifications
         </Button>
@@ -638,7 +638,7 @@ function ConfigPanel() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ul className="divide-y divide-white/[0.05]">
+          <ul className="divide-y divide-hairline/[0.05]">
             {SERVICES.map((svc) => {
               const result = results[svc.key];
               return (

@@ -11,7 +11,7 @@ export function DisclaimerFooter({ className }: { className?: string }) {
   return (
     <footer
       className={cn(
-        "border-t border-white/[0.07] bg-base-900/60 px-6 py-5 backdrop-blur-sm",
+        "border-t border-hairline/[0.07] bg-base-900/60 px-6 py-5 backdrop-blur-sm",
         className,
       )}
     >

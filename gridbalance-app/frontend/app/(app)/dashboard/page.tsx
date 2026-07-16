@@ -174,7 +174,7 @@ export default function DashboardPage() {
             {isLoading && !kpis ? (
               <div className="space-y-2">
                 {[0, 1, 2].map((i) => (
-                  <div key={i} className="h-16 animate-pulse rounded-lg bg-white/[0.04]" />
+                  <div key={i} className="h-16 animate-pulse rounded-lg bg-hairline/[0.04]" />
                 ))}
               </div>
             ) : kpis?.last_alerts?.length ? (
@@ -182,7 +182,7 @@ export default function DashboardPage() {
                 {kpis.last_alerts.slice(0, 5).map((alert) => (
                   <li
                     key={alert.id}
-                    className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2.5"
+                    className="rounded-lg border border-hairline/[0.06] bg-hairline/[0.02] px-3 py-2.5"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 space-y-1">
@@ -230,16 +230,16 @@ export default function DashboardPage() {
             {isLoading && !kpis ? (
               <div className="space-y-2">
                 {[0, 1, 2].map((i) => (
-                  <div key={i} className="h-14 animate-pulse rounded-lg bg-white/[0.04]" />
+                  <div key={i} className="h-14 animate-pulse rounded-lg bg-hairline/[0.04]" />
                 ))}
               </div>
             ) : kpis?.last_runs?.length ? (
-              <ul className="divide-y divide-white/[0.05]">
+              <ul className="divide-y divide-hairline/[0.05]">
                 {kpis.last_runs.slice(0, 6).map((run) => (
                   <li key={run.correlation_id}>
                     <Link
                       href={`/simulation?cid=${run.correlation_id}`}
-                      className="flex flex-wrap items-center justify-between gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-hairline/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <span className="flex flex-wrap items-center gap-2.5">
                         <RunStatusBadge status={run.status} />

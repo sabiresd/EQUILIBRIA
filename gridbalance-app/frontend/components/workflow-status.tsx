@@ -89,7 +89,7 @@ export function WorkflowHealthPanel() {
               return (
                 <li
                   key={id}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2.5"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-hairline/[0.06] bg-hairline/[0.02] px-3 py-2.5"
                 >
                   <div className="flex min-w-0 items-center gap-2.5">
                     <StatusDot status={status} pulse />

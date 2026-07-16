@@ -8,7 +8,7 @@ export default function NotFound() {
     <div className="flex min-h-screen flex-col">
       <main className="flex flex-1 items-center justify-center px-6 py-16">
         <div className="w-full max-w-md text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/[0.03]">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-hairline/10 bg-hairline/[0.03]">
             <Compass className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
           </div>
 

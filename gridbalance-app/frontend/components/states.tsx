@@ -92,11 +92,11 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-white/10 bg-white/[0.015] px-6 py-14 text-center",
+        "flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-hairline/10 bg-hairline/[0.015] px-6 py-14 text-center",
         className,
       )}
     >
-      <div className="rounded-full border border-white/10 bg-white/[0.03] p-3">
+      <div className="rounded-full border border-hairline/10 bg-hairline/[0.03] p-3">
         <Icon className="h-6 w-6 text-muted-foreground/70" aria-hidden={true} />
       </div>
       <div className="space-y-1">

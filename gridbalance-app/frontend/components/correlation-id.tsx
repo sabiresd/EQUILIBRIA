@@ -51,7 +51,7 @@ export function CorrelationId({
         title={value}
         aria-label={`${label} ${value}. Cliquer pour copier.`}
         className={cn(
-          "group inline-flex items-center gap-1.5 rounded border border-white/10 bg-white/[0.03] px-1.5 py-0.5",
+          "group inline-flex items-center gap-1.5 rounded border border-hairline/10 bg-hairline/[0.03] px-1.5 py-0.5",
           "font-mono text-[11px] text-muted-foreground transition-colors hover:border-emerald-500/40 hover:text-emerald-300",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         )}

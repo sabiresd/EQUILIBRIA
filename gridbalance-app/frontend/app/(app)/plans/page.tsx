@@ -216,7 +216,7 @@ function ValidationQueue({ onValidate }: { onValidate: (run: Run) => void }) {
             {validations.map((run) => (
               <li
                 key={run.correlation_id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-white/[0.07] bg-white/[0.02] px-3 py-3"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-hairline/[0.07] bg-hairline/[0.02] px-3 py-3"
               >
                 <div className="min-w-0 space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">

@@ -3,8 +3,64 @@
 @tailwind utilities;
 
 @layer base {
+  /* ---------------------------------------------------------------------
+   * THEME CLAIR (defaut de :root) — voir .dark plus bas pour le sombre.
+   *
+   * L'emeraude #17c884 est IDENTIQUE dans les deux themes : c'est la marque.
+   * Son texte reste donc l'encre sombre (`text-ink`) partout, sinon le
+   * contraste sur l'aplat vert s'effondrerait en clair.
+   * --------------------------------------------------------------------- */
   :root {
-    /* Charte GridBalance : fond #040e1b, primaire vert emeraude #17c884. */
+    --background: 213 33% 97%;
+    --foreground: 213 45% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 213 45% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 213 45% 11%;
+
+    --primary: 159 79% 44%; /* #17c884 — marque, invariant */
+    --primary-foreground: 213 76% 6%;
+
+    --secondary: 213 25% 92%;
+    --secondary-foreground: 213 45% 11%;
+
+    --muted: 213 25% 92%;
+    --muted-foreground: 213 14% 40%; /* lisible sur fond clair (>= 4.5:1) */
+
+    --accent: 159 79% 44%;
+    --accent-foreground: 213 76% 6%;
+
+    --destructive: 356 70% 45%; /* assombri : lisible sur fond clair */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 213 20% 86%;
+    --input: 213 20% 86%;
+    --ring: 159 79% 44%;
+
+    /* Surfaces (classes base-*) */
+    --base-900: 213 33% 97%; /* fond de page */
+    --base-800: 0 0% 100%; /* surface des cartes */
+    --base-700: 213 25% 94%;
+    --base-600: 213 22% 90%;
+
+    /* Filet : encre sombre translucide sur fond clair */
+    --hairline: 15 30 55;
+
+    /* Chrome des graphiques */
+    --chart-surface: 0 0% 100%;
+
+    --shadow-panel: 0 1px 0 0 rgb(255 255 255 / 0.6) inset,
+      0 12px 28px -18px rgb(15 30 55 / 0.28);
+
+    --radius: 0.6rem;
+  }
+
+  /* ---------------------------------------------------------------------
+   * THEME SOMBRE — la charte d'origine : fond #040e1b, cartes #071627.
+   * --------------------------------------------------------------------- */
+  .dark {
     --background: 213 76% 6%; /* #040e1b */
     --foreground: 210 30% 94%;
 
@@ -33,7 +89,17 @@
     --input: 210 20% 100%;
     --ring: 159 79% 44%; /* focus visible = vert emeraude */
 
-    --radius: 0.6rem;
+    --base-900: 213 76% 6%; /* #040e1b */
+    --base-800: 213 60% 9%; /* #071627 */
+    --base-700: 211 67% 12%; /* #0a1e33 */
+    --base-600: 211 64% 15%; /* #0e2740 */
+
+    --hairline: 255 255 255;
+
+    --chart-surface: 213 60% 9%;
+
+    --shadow-panel: 0 1px 0 0 rgb(255 255 255 / 0.04) inset,
+      0 20px 40px -24px rgb(0 0 0 / 0.8);
   }
 
   * {
@@ -46,11 +112,18 @@
 
   body {
     @apply bg-background text-foreground antialiased;
+    /* Halos de marque : plus francs en clair (ils se posent sur du blanc). */
+    background-image:
+      radial-gradient(70rem 40rem at 12% -10%, rgba(23, 200, 132, 0.1), transparent 60%),
+      radial-gradient(50rem 30rem at 110% 0%, rgba(56, 189, 248, 0.08), transparent 55%);
+    background-attachment: fixed;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  .dark body {
     background-image:
       radial-gradient(70rem 40rem at 12% -10%, rgba(23, 200, 132, 0.07), transparent 60%),
       radial-gradient(50rem 30rem at 110% 0%, rgba(56, 189, 248, 0.05), transparent 55%);
-    background-attachment: fixed;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
   /* Accessibilite : focus TOUJOURS visible au clavier. */
@@ -79,20 +152,26 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgb(var(--hairline) / 0.22);
     border-radius: 9999px;
     border: 2px solid transparent;
     background-clip: content-box;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(255, 255, 255, 0.18);
+    background-color: rgb(var(--hairline) / 0.35);
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background-color: rgb(var(--hairline) / 0.1);
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(var(--hairline) / 0.18);
   }
 }
 
 @layer components {
   /* Lien d'evitement (accessibilite clavier). */
   .skip-link {
-    @apply absolute left-4 top-4 z-[200] -translate-y-24 rounded-md bg-emerald-500 px-4 py-2 text-sm font-semibold text-base-900 transition-transform;
+    @apply absolute left-4 top-4 z-[200] -translate-y-24 rounded-md bg-emerald-500 px-4 py-2 text-sm font-semibold text-ink transition-transform;
   }
   .skip-link:focus {
     @apply translate-y-0;
@@ -108,16 +187,19 @@
 
   /* Surface "verre" utilisee par les panneaux secondaires. */
   .panel {
-    @apply rounded-xl border border-white/[0.07] bg-base-800/70 shadow-panel backdrop-blur-sm;
+    @apply rounded-xl border border-hairline/[0.07] bg-base-800/70 shadow-panel backdrop-blur-sm;
   }
 }
 
-/* Recharts : styles neutres coherents avec le theme sombre. */
+/* Recharts : le chrome suit le theme (filet + encre). */
 .recharts-cartesian-grid line {
-  stroke: rgba(255, 255, 255, 0.06);
+  stroke: rgb(var(--hairline) / 0.12);
+}
+.dark .recharts-cartesian-grid line {
+  stroke: rgb(var(--hairline) / 0.06);
 }
 .recharts-text {
-  fill: rgb(148 163 184);
+  fill: hsl(var(--muted-foreground));
   font-size: 11px;
 }
 .recharts-surface:focus {

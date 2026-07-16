@@ -90,13 +90,13 @@ function RecipientsInput({
         <ul className="flex flex-wrap gap-2 pt-1">
           {recipients.map((r) => (
             <li key={r}>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-white/[0.04] py-1 pl-2.5 pr-1 text-xs text-foreground">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-hairline/12 bg-hairline/[0.04] py-1 pl-2.5 pr-1 text-xs text-foreground">
                 {r}
                 <button
                   type="button"
                   onClick={() => onChange(recipients.filter((x) => x !== r))}
                   aria-label={`Retirer ${r}`}
-                  className="rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-hairline/10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <X className="h-3 w-3" aria-hidden="true" />
                 </button>
@@ -350,7 +350,7 @@ export default function RapportsPage() {
                 title="Apercu du rapport"
                 srcDoc={previewHtml}
                 sandbox=""
-                className="h-[640px] w-full rounded-lg border border-white/[0.07] bg-white"
+                className="h-[640px] w-full rounded-lg border border-hairline/[0.07] bg-white"
               />
             ) : (
               <TableSkeleton rows={4} cols={2} />

@@ -214,7 +214,7 @@ export default function LoginPage() {
                 </form>
 
                 {/* -------------------------------------- comptes de demo */}
-                <div className="mt-7 border-t border-white/[0.07] pt-5">
+                <div className="mt-7 border-t border-hairline/[0.07] pt-5">
                   <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Comptes de demonstration
                   </p>
@@ -226,7 +226,7 @@ export default function LoginPage() {
                           onClick={() => fillDemo(acc.email)}
                           aria-label={`Pre-remplir le formulaire avec le compte ${ROLE_LABELS[acc.role]} ${acc.email}`}
                           className={cn(
-                            "group flex w-full items-center justify-between gap-3 rounded-lg border border-white/[0.07] bg-white/[0.02] px-3 py-2.5 text-left transition-colors",
+                            "group flex w-full items-center justify-between gap-3 rounded-lg border border-hairline/[0.07] bg-hairline/[0.02] px-3 py-2.5 text-left transition-colors",
                             "hover:border-emerald-500/40 hover:bg-emerald-500/[0.06]",
                             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-base-800",
                             email === acc.email && "border-emerald-500/50 bg-emerald-500/[0.08]",
@@ -255,7 +255,7 @@ export default function LoginPage() {
                   </ul>
                   <p className="mt-3 text-[11px] text-muted-foreground/70">
                     Mot de passe commun :{" "}
-                    <code className="rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-foreground">
+                    <code className="rounded bg-hairline/[0.06] px-1.5 py-0.5 font-mono text-foreground">
                       {DEMO_PASSWORD}
                     </code>
                   </p>

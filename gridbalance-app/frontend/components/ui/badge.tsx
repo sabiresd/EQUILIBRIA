@@ -8,12 +8,12 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default: "border-emerald-500/30 bg-emerald-500/12 text-emerald-300",
-        neutral: "border-white/12 bg-white/[0.04] text-muted-foreground",
+        neutral: "border-hairline/12 bg-hairline/[0.04] text-muted-foreground",
         success: "border-ok/30 bg-ok/12 text-emerald-300",
         warning: "border-warn/30 bg-warn/12 text-amber-300",
         danger: "border-danger/35 bg-danger/12 text-red-300",
         info: "border-info/30 bg-info/12 text-sky-300",
-        outline: "border-white/15 text-foreground",
+        outline: "border-hairline/15 text-foreground",
       },
     },
     defaultVariants: { variant: "default" },

@@ -36,7 +36,7 @@ export const STATUS = {
 /** Le deficit est une grandeur NEGATIVE par nature => couleur de statut. */
 export const DEFICIT_COLOR = STATUS.critical;
 
-/** Chrome du graphique : grille et axes en filet, recessifs. */
+/** Chrome du graphique : grille et axes en filet, recessifs. Mode SOMBRE. */
 export const CHART = {
   surface: "#071627",
   grid: "rgba(255,255,255,0.06)",
@@ -50,12 +50,37 @@ export const CHART = {
   cursor: "rgba(255,255,255,0.22)",
 } as const;
 
-export const AXIS_PROPS = {
-  stroke: CHART.axis,
-  tick: { fill: CHART.tick, fontSize: 11 },
-  tickLine: false,
-  axisLine: { stroke: CHART.axis },
+/**
+ * Chrome en mode CLAIR. Seul le chrome change : les couleurs de SERIES restent
+ * identiques. Elles ont ete validees dans une bande de luminosite moyenne
+ * (L 0.48–0.67), donc elles gardent >= 3:1 sur blanc comme sur #071627 — c'est
+ * precisement l'interet de cette bande, et la couleur reste liee a l'entite.
+ */
+export const CHART_LIGHT = {
+  surface: "#ffffff",
+  grid: "rgba(15,30,55,0.10)",
+  axis: "rgba(15,30,55,0.22)",
+  tick: "#5b6b82",
+  ink: "#0f1e37",
+  muted: "#5b6b82",
+  windlessFill: "rgba(202, 138, 4, 0.12)",
+  windlessStroke: "rgba(161, 98, 7, 0.50)",
+  cursor: "rgba(15,30,55,0.28)",
 } as const;
+
+/** Memes clefs que CHART, mais valeurs elargies : les deux chromes coexistent
+ *  (`as const` figerait chaque couleur en type litteral). */
+export type ChartChrome = Record<keyof typeof CHART, string>;
+
+/** Proprietes d'axe derivees du chrome courant (clair ou sombre). */
+export function axisProps(chrome: ChartChrome = CHART) {
+  return {
+    stroke: chrome.axis,
+    tick: { fill: chrome.tick, fontSize: 11 },
+    tickLine: false,
+    axisLine: { stroke: chrome.axis },
+  } as const;
+}
 
 /** Ticks toutes les 24 h sur l'horizon de 360 h (15 jours). */
 export function dayTicks(maxHour = 359, step = 24): number[] {

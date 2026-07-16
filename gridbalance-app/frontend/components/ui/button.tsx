@@ -13,14 +13,14 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-emerald-500 text-base-900 font-semibold hover:bg-emerald-400 shadow-[0_6px_20px_-10px_rgba(23,200,132,0.9)]",
+          "bg-emerald-500 text-ink font-semibold hover:bg-emerald-400 shadow-[0_6px_20px_-10px_rgba(23,200,132,0.9)]",
         destructive:
           "bg-danger text-white hover:bg-danger/90 focus-visible:ring-danger",
         outline:
-          "border border-white/12 bg-white/[0.02] text-foreground hover:bg-white/[0.06] hover:border-white/20",
+          "border border-hairline/12 bg-hairline/[0.02] text-foreground hover:bg-hairline/[0.06] hover:border-hairline/20",
         secondary:
-          "bg-white/[0.06] text-foreground hover:bg-white/[0.1]",
-        ghost: "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground",
+          "bg-hairline/[0.06] text-foreground hover:bg-hairline/[0.1]",
+        ghost: "text-muted-foreground hover:bg-hairline/[0.06] hover:text-foreground",
         link: "text-emerald-400 underline-offset-4 hover:underline",
       },
       size: {

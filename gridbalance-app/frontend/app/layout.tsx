@@ -22,14 +22,27 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#040e1b",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f2f5f9" },
+    { media: "(prefers-color-scheme: dark)", color: "#040e1b" },
+  ],
   width: "device-width",
   initialScale: 1,
 };
 
+/**
+ * Rejoue le theme memorise AVANT le premier rendu : sans ce script, la page
+ * s'afficherait en sombre (le defaut du SSR) puis basculerait en clair — un
+ * flash visible a chaque navigation.
+ */
+const antiFlash = `(function(){try{var t=localStorage.getItem("gridbalance-theme");if(t==="light")document.documentElement.classList.remove("dark");}catch(e){}})();`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" className={`dark ${inter.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: antiFlash }} />
+      </head>
       <body className="min-h-screen bg-background font-sans text-foreground">
         {children}
         <Toaster />

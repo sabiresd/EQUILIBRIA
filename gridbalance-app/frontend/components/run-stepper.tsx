@@ -14,12 +14,12 @@ const STATUS_TEXT = {
 
 function StepIcon({ status }: { status: WorkflowStep["status"] }) {
   if (status === "done") {
-    return <Check className="h-4 w-4 text-base-900" aria-hidden="true" />;
+    return <Check className="h-4 w-4 text-ink" aria-hidden="true" />;
   }
   if (status === "running") {
     return (
       <Loader2
-        className="h-4 w-4 animate-spin text-base-900 motion-reduce:animate-none"
+        className="h-4 w-4 animate-spin text-ink motion-reduce:animate-none"
         aria-hidden="true"
       />
     );
@@ -57,7 +57,7 @@ export function RunStepper({ run }: { run: Run | undefined }) {
               status === "done" && "border-emerald-500/30 bg-emerald-500/[0.07]",
               status === "running" && "border-emerald-500/50 bg-emerald-500/[0.12] shadow-glow",
               status === "error" && "border-danger/40 bg-danger/[0.08]",
-              status === "pending" && "border-white/[0.07] bg-white/[0.02]",
+              status === "pending" && "border-hairline/[0.07] bg-hairline/[0.02]",
             )}
           >
             <div className="flex items-start gap-3">
@@ -67,7 +67,7 @@ export function RunStepper({ run }: { run: Run | undefined }) {
                   status === "done" && "bg-emerald-500",
                   status === "running" && "bg-emerald-400",
                   status === "error" && "bg-danger",
-                  status === "pending" && "border border-white/12 bg-white/[0.04]",
+                  status === "pending" && "border border-hairline/12 bg-hairline/[0.04]",
                 )}
               >
                 <StepIcon status={status} />

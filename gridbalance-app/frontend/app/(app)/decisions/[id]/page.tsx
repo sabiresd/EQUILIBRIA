@@ -273,7 +273,7 @@ export default function DecisionDetailPage() {
                 {card.actions.map((a, i) => (
                   <li
                     key={`${a.site}-${i}`}
-                    className="rounded-md border border-white/[0.06] bg-white/[0.02] p-3"
+                    className="rounded-md border border-hairline/[0.06] bg-hairline/[0.02] p-3"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="text-sm font-medium text-foreground">
@@ -312,7 +312,7 @@ export default function DecisionDetailPage() {
               </Button>
             </CardHeader>
             <CardContent>
-              <pre className="max-h-[420px] overflow-auto rounded-lg border border-white/[0.07] bg-base-900/70 p-4 font-mono text-[11px] leading-relaxed text-muted-foreground">
+              <pre className="max-h-[420px] overflow-auto rounded-lg border border-hairline/[0.07] bg-base-900/70 p-4 font-mono text-[11px] leading-relaxed text-muted-foreground">
                 <code>{canonical}</code>
               </pre>
             </CardContent>
@@ -336,7 +336,7 @@ export default function DecisionDetailPage() {
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   Empreinte enregistree
                 </p>
-                <code className="mt-1 block break-all rounded bg-white/[0.04] p-2 font-mono text-[11px] text-foreground">
+                <code className="mt-1 block break-all rounded bg-hairline/[0.04] p-2 font-mono text-[11px] text-foreground">
                   {decision.sha256}
                 </code>
               </div>
