@@ -67,20 +67,23 @@ type RunParams = { battery: Battery; tariffs: Tariffs };
 /*                              Valeurs par defaut                             */
 /* -------------------------------------------------------------------------- */
 
-/** Parc eolien de Tarfaya (sud marocain) — site de demonstration. */
+/** Usine MT de demonstration (Kenitra) — dimensionnee sur la facture ONEE. */
 const DEFAULT_FORM = {
-  name: "Parc de Tarfaya",
-  lat: "27.9385",
-  lon: "-12.9290",
+  name: "Usine de demonstration - Kenitra",
+  lat: "34.2610",
+  lon: "-6.5802",
   scenario: "windless" as Scenario,
-  capacity_mwh: "400",
-  p_max_mw: "100",
-  soc_min: "0.15",
+  // Batterie a l'echelle du site (~1.3 MW moyen) : ecrete les 4 h de pointe du
+  // soir. Une batterie surdimensionnee couvrirait tout et masquerait le deficit.
+  capacity_mwh: "8",
+  p_max_mw: "2",
+  soc_min: "0.10",
   efficiency: "0.92",
-  degradation_cost_mwh: "45",
-  creuse: "700",
-  normale: "1100",
-  pointe: "1800",
+  degradation_cost_mwh: "120",
+  // Tarifs indicatifs (MAD/MWh). Le backend les remplace par ceux de la facture.
+  creuse: "650",
+  normale: "900",
+  pointe: "1400",
   rag_mode: "hybrid" as RagMode,
 };
 

@@ -13,6 +13,7 @@ import math
 import random
 from uuid import UUID
 
+from app.services import gridbalance_engine as engine
 from contracts.contracts import (
     Citation,
     DeficitSummary,
@@ -46,12 +47,19 @@ def _rng(correlation_id: UUID) -> random.Random:
     return random.Random(correlation_id.int & 0xFFFFFFFF)
 
 
-def _tariff_period(h: int) -> str:
-    """Heure locale = h % 24. Periodes tarifaires de demonstration."""
-    hod = h % 24
+def _tariff_period(h: int, start_hour_local: int = 0) -> str:
+    """Periode tarifaire du point h.
+
+    L'heure locale n'est PAS h % 24 : elle depend de l'heure a laquelle la serie
+    commence. Une serie envoyee a 15 h porte start_hour_local=15, et son point
+    h=3 tombe donc a 18 h — en pointe, pas a 3 h du matin.
+
+    Periodes de demonstration, alignees sur la facture ONEE (18 h -> 22 h en pointe).
+    """
+    hod = (h + start_hour_local) % 24
     if hod < 6 or hod >= 22:
         return "creuse"
-    if 18 <= hod < 20:
+    if 18 <= hod < 22:
         return "pointe"
     return "normale"
 
@@ -112,25 +120,53 @@ def _wind_power(wind_ms: float) -> float:
 
 
 def wf1(req: WF1Request) -> WF1Response:
-    rng = _rng(req.correlation_id)
-    series: list[SeriesPoint] = []
-    for h in range(req.horizon_hours):
-        wind = _wind_ms(h, req.scenario, rng)
-        ghi = _ghi(h, rng)
-        series.append(
-            SeriesPoint(
-                h=h,
-                wind_ms=wind,
-                ghi=ghi,
-                prod_wind_mw=_wind_power(wind),
-                prod_solar_mw=round(SOLAR_CAPACITY_MW * ghi / 1000.0, 3),
-                demand_mw=_demand(h, rng),
-            )
-        )
-    return WF1Response(series=series)
+    """Agent Simulateur : donnees NASA 2023 reelles + facture ONEE.
+
+    Delegue au moteur deterministe (formules eoliennes (6)-(8), recalage de la
+    demande sur la facture, tarifs et plafond reseau issus de la facture). Le
+    payload complet est mis en cache pour que l'orchestrateur construise le
+    WF2Request et enrichisse le run affiche au dashboard.
+
+    anchor="now" : la serie demarre a l'heure REELLE (temps reel), sauf scenario
+    de demonstration explicite.
+    """
+    anchor = "random" if req.scenario in ("windless", "sans_vent") else "now"
+    payload = engine.simulate(
+        mode="window",
+        hours=req.horizon_hours,
+        anchor=anchor,
+        correlation_id=str(req.correlation_id),
+    )
+    engine.stash_payload(str(req.correlation_id), payload)
+    return WF1Response(series=[SeriesPoint(**p) for p in payload["series"]])
 
 
 def wf2(req: WF2Request) -> WF2Response:
+    """Agent Calcul : dispatch batterie deterministe sur 360 h.
+
+    Delegue au moteur (meme code que le noeud Python d'ABA Fusion). La periode
+    tarifaire suit start_hour_local ; le deficit apparait quand le soutirage
+    depasse grid_cap_mw (la puissance souscrite de la facture).
+    """
+    result = engine.compute(
+        {
+            "correlation_id": str(req.correlation_id),
+            "series": [p.model_dump() for p in req.series],
+            "battery": req.battery.model_dump(),
+            "tariffs": req.tariffs.model_dump(),
+            "start_hour_local": req.start_hour_local,
+            "grid_cap_mw": req.grid_cap_mw,
+            "baseline": req.baseline.model_dump() if req.baseline else None,
+        }
+    )
+    return WF2Response(
+        hourly=[HourlyPoint(**h) for h in result["hourly"]],
+        totals=WF2Totals(**result["totals"]),
+    )
+
+
+def _wf2_legacy(req: WF2Request) -> WF2Response:
+    """Ancien dispatch synthetique, conserve pour reference (non appele)."""
     bat = req.battery
     soc_mwh = bat.capacity_mwh * 0.8  # etat de charge initial
     floor_mwh = bat.capacity_mwh * bat.soc_min
@@ -150,7 +186,7 @@ def wf2(req: WF2Request) -> WF2Response:
         charge = min(surplus, bat.p_max_mw, bat.capacity_mwh - soc_mwh)
         soc_mwh = min(bat.capacity_mwh, soc_mwh + charge * bat.efficiency)
 
-        period = _tariff_period(p.h)
+        period = _tariff_period(p.h, req.start_hour_local)
         tariff = getattr(req.tariffs, period)
 
         # La batterie ne se decharge que si son cout d'usure est inferieur au tarif
@@ -168,8 +204,11 @@ def wf2(req: WF2Request) -> WF2Response:
         cost_total += hour_cost
 
         # Un deficit apparait quand ni la production, ni la batterie ne repondent et
-        # que le besoin depasse ce que le reseau peut livrer en pointe (plafond demo).
-        grid_cap = 12.0
+        # que le besoin depasse ce que le site a le droit de soutirer au reseau.
+        # Ce plafond est sa PUISSANCE SOUSCRITE (lue sur la facture) : au-dela, il
+        # est en depassement, lourdement penalise. 12 MW = ancien defaut de demo,
+        # conserve pour les runs qui ne fournissent pas de facture.
+        grid_cap = req.grid_cap_mw if req.grid_cap_mw is not None else 12.0
         if grid > grid_cap:
             deficit = round(grid - grid_cap, 3)
             grid = grid_cap

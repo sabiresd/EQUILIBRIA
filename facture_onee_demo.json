@@ -1,0 +1,37 @@
+{
+  "_disclaimer": "Facture GENEREE par generer_facture.py. Structure inspiree du tarif ONEE Moyenne Tension (option generale), valeurs fictives. Aucune valeur officielle ONEE / ANRE.",
+  "_hypotheses": {
+    "conso_mensuelle_mwh": 936.0,
+    "repartition_postes": {
+      "creuse": 0.287,
+      "normale": 0.548,
+      "pointe": 0.165
+    },
+    "note": "Profil 3x8 : l'usine tourne la nuit, d'ou un poste creuse eleve. C'est cette information que la facture apporte au simulateur."
+  },
+  "reference": "ONEE-MT-2023-08-004217",
+  "client": "Usine de demonstration - Zone industrielle Kenitra",
+  "tarif": "Moyenne Tension - Option generale",
+  "periode_debut": "2023-08-01",
+  "periode_fin": "2023-08-31",
+  "jours_factures": 31,
+  "puissance_souscrite_kva": 1200.0,
+  "puissance_appelee_max_kva": 1140,
+  "prime_puissance_mad_kva_mois": 40.0,
+  "consommation_kwh": {
+    "creuse": 268632.0,
+    "normale": 512928.0,
+    "pointe": 154440.0
+  },
+  "prix_mad_kwh": {
+    "creuse": 0.65,
+    "normale": 0.9,
+    "pointe": 1.4
+  },
+  "montant_energie_mad": 852462.0,
+  "montant_puissance_mad": 48000.0,
+  "montant_ht_mad": 900462.0,
+  "tva_pct": 20.0,
+  "montant_tva_mad": 180092.4,
+  "montant_total_ttc_mad": 1080554.4
+}

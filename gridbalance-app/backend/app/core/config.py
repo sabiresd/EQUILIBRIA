@@ -2,12 +2,19 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Le .env vit a la racine du monorepo (gridbalance-app/.env), pas dans backend/.
+# On le pointe par chemin ABSOLU : sinon, selon le dossier de lancement d'uvicorn,
+# le backend ne le lit pas et retombe silencieusement sur les valeurs par defaut.
+# config.py -> app/core, donc parents[3] = gridbalance-app/.
+_ENV_FILE = Path(__file__).resolve().parents[3] / ".env"
+
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=str(_ENV_FILE), extra="ignore")
 
     app_name: str = "GridBalance AI Morocco"
     environment: str = "development"

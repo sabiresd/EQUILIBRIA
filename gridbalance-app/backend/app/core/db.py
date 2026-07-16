@@ -80,10 +80,20 @@ def get_client():
             )
             _client = AsyncMongoMockClient()
         else:
+            # Sur Windows, Atlas (mongodb+srv) echoue souvent en SSL sans le
+            # bundle de certificats de certifi. On l'ajoute si disponible.
+            tls_kw = {}
+            try:
+                import certifi
+
+                tls_kw["tlsCAFile"] = certifi.where()
+            except ImportError:
+                pass
             _client = AsyncIOMotorClient(
                 settings.mongo_url,
                 uuidRepresentation="standard",
                 serverSelectionTimeoutMS=5000,
+                **tls_kw,
             )
     return _client
 

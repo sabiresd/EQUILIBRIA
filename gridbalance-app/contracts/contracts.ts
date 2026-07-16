@@ -59,6 +59,51 @@ export const TariffsSchema = z.object({
   pointe: z.number().min(0),
 });
 
+/**
+ * Heure locale du point h : (h + start_hour_local) % 24.
+ * Une série envoyée à 15 h porte start_hour_local = 15. Par défaut 0 (minuit).
+ */
+export const StartHourLocalSchema = z.number().int().min(0).max(23).default(0);
+
+/** Énergie (kWh) ventilée par période tarifaire. */
+export const PeriodKwhSchema = z.object({
+  creuse: z.number().min(0),
+  normale: z.number().min(0),
+  pointe: z.number().min(0),
+});
+
+/** Facture ONEE Moyenne Tension du site. Valeurs de DÉMONSTRATION. */
+export const FactureSchema = z.object({
+  reference: z.string(),
+  periode_debut: z.string(),
+  periode_fin: z.string(),
+  jours_factures: z.number().int().min(1),
+  puissance_souscrite_kva: z.number().min(0),
+  prime_puissance_mad_kva_mois: z.number().min(0),
+  consommation_kwh: PeriodKwhSchema,
+  prix_mad_kwh: PeriodKwhSchema,
+  montant_ht_mad: z.number().min(0).nullable().optional(),
+  montant_total_ttc_mad: z.number().min(0).nullable().optional(),
+});
+
+/**
+ * Coût de référence sur l'horizon, SANS batterie ni rééquilibrage : toute la
+ * demande est achetée au réseau aux prix de la facture. C'est ce que le site
+ * paie aujourd'hui, et donc le point de comparaison de l'économie annoncée.
+ */
+export const BaselineSchema = z.object({
+  horizon_hours: z.number().int().min(1),
+  energy_kwh: PeriodKwhSchema.nullable().optional(),
+  energy_kwh_total: z.number().min(0),
+  cost_energy_mad: z.number().min(0).nullable().optional(),
+  cost_power_mad: z.number().min(0).nullable().optional(),
+  cost_ht_mad: z.number().min(0),
+  cost_ttc_mad: z.number().min(0).nullable().optional(),
+  tva_pct: z.number().min(0).nullable().optional(),
+  source: z.string().nullable().optional(),
+  note: z.string().nullable().optional(),
+});
+
 export const HourlyPointSchema = z.object({
   h: z.number().int(),
   deficit_mw: z.number().min(0),
@@ -260,6 +305,9 @@ export type Role = z.infer<typeof RoleSchema>;
 export type Health = z.infer<typeof HealthSchema>;
 export type Battery = z.infer<typeof BatterySchema>;
 export type Tariffs = z.infer<typeof TariffsSchema>;
+export type PeriodKwh = z.infer<typeof PeriodKwhSchema>;
+export type Facture = z.infer<typeof FactureSchema>;
+export type Baseline = z.infer<typeof BaselineSchema>;
 export type ProtectedLoad = z.infer<typeof ProtectedLoadSchema>;
 export type DeficitSummary = z.infer<typeof DeficitSummarySchema>;
 export type WF2Totals = z.infer<typeof WF2TotalsSchema>;

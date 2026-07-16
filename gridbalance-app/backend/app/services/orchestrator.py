@@ -12,6 +12,7 @@ from uuid import UUID, uuid4
 
 from app.core.db import get_db
 from app.services import audit
+from app.services import gridbalance_engine as engine
 from app.services.stubs import deficit_summary_from
 from app.services.workflows import (
     WorkflowError,
@@ -21,8 +22,10 @@ from app.services.workflows import (
     call_wf4,
 )
 from contracts.contracts import (
+    Baseline,
     Battery,
     DecisionCard,
+    Facture,
     HourlyPoint,
     ProtectedLoad,
     Site,
@@ -116,6 +119,13 @@ async def execute_run(cid: UUID) -> None:
         await _set_step(cid, "WF1", status="done", duration_ms=r1.duration_ms)
         series = r1.data["series"]
 
+        # Le moteur a mis en cache le payload complet : la facture est la verite du
+        # site (tarifs, plafond reseau, baseline), la batterie reste un actif du run.
+        payload = engine.peek_payload(str(cid)) or {}
+        tariffs = Tariffs(**payload["tariffs"]) if payload.get("tariffs") else Tariffs(**run["tariffs"])
+        facture = Facture(**payload["facture"]) if payload.get("facture") else None
+        baseline = Baseline(**payload["baseline"]) if payload.get("baseline") else None
+
         # ---- WF-2 : bilan horaire, dispatch batterie, deficits, couts
         await _set_step(cid, "WF2", status="running")
         r2 = await call_wf2(
@@ -123,7 +133,11 @@ async def execute_run(cid: UUID) -> None:
                 correlation_id=cid,
                 series=series,
                 battery=Battery(**run["battery"]),
-                tariffs=Tariffs(**run["tariffs"]),
+                tariffs=tariffs,
+                start_hour_local=payload.get("start_hour_local", 0),
+                grid_cap_mw=payload.get("grid_cap_mw"),
+                facture=facture,
+                baseline=baseline,
             )
         )
         await _set_step(cid, "WF2", status="done", duration_ms=r2.duration_ms)
@@ -131,6 +145,12 @@ async def execute_run(cid: UUID) -> None:
         hourly = [HourlyPoint(**h) for h in r2.data["hourly"]]
         totals = WF2Totals(**r2.data["totals"])
         summary = deficit_summary_from(hourly, totals)
+
+        # Apport propre du pilotage (parc deduit), pour un chiffre honnete au dashboard.
+        contribution = None
+        if payload.get("baseline"):
+            contrib_payload = {**payload, "battery": run["battery"]}
+            contribution = engine.battery_contribution(contrib_payload)
 
         await db.runs.update_one(
             {"_id": str(cid)},
@@ -141,11 +161,18 @@ async def execute_run(cid: UUID) -> None:
                     "hourly": r2.data["hourly"],
                     "totals": r2.data["totals"],
                     "deficit_summary": summary.model_dump(mode="json"),
+                    "tariffs": tariffs.model_dump(mode="json"),
+                    "grid_cap_mw": payload.get("grid_cap_mw"),
+                    "start_hour_local": payload.get("start_hour_local", 0),
+                    "facture": payload.get("facture"),
+                    "baseline": payload.get("baseline"),
+                    "battery_contribution": contribution,
                     "degraded": r1.degraded or r2.degraded,
                     "degraded_note": r1.note or r2.note,
                 }
             },
         )
+        engine.pop_payload(str(cid))
         await audit.log("run.complete", correlation_id=cid, detail={"totals": r2.data["totals"]})
 
         run = await db.runs.find_one({"_id": str(cid)})

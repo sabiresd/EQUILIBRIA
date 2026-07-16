@@ -72,14 +72,87 @@
         "pointe": { "type": "number", "minimum": 0 }
       }
     },
+    "PeriodKwh": {
+      "type": "object",
+      "description": "Energie en kWh, ventilee par periode tarifaire.",
+      "required": ["creuse", "normale", "pointe"],
+      "properties": {
+        "creuse": { "type": "number", "minimum": 0 },
+        "normale": { "type": "number", "minimum": 0 },
+        "pointe": { "type": "number", "minimum": 0 }
+      }
+    },
+    "Facture": {
+      "type": "object",
+      "description": "Facture ONEE Moyenne Tension du site. Sert a recaler la demande simulee, a fournir les prix reellement factures, et a etablir la baseline. Valeurs de DEMONSTRATION.",
+      "required": [
+        "reference",
+        "periode_debut",
+        "periode_fin",
+        "jours_factures",
+        "puissance_souscrite_kva",
+        "prime_puissance_mad_kva_mois",
+        "consommation_kwh",
+        "prix_mad_kwh"
+      ],
+      "properties": {
+        "reference": { "type": "string" },
+        "periode_debut": { "type": "string", "format": "date" },
+        "periode_fin": { "type": "string", "format": "date" },
+        "jours_factures": { "type": "integer", "minimum": 1 },
+        "puissance_souscrite_kva": { "type": "number", "minimum": 0 },
+        "prime_puissance_mad_kva_mois": { "type": "number", "minimum": 0 },
+        "consommation_kwh": { "$ref": "#/$defs/PeriodKwh" },
+        "prix_mad_kwh": { "$ref": "#/$defs/PeriodKwh" },
+        "montant_ht_mad": { "type": "number", "minimum": 0 },
+        "montant_total_ttc_mad": { "type": "number", "minimum": 0 }
+      }
+    },
+    "Baseline": {
+      "type": "object",
+      "description": "Cout de reference sur l'horizon, SANS batterie ni reequilibrage : toute la demande est achetee au reseau aux prix de la facture. C'est le point de comparaison de l'Agent Calcul.",
+      "required": ["horizon_hours", "energy_kwh_total", "cost_ht_mad"],
+      "properties": {
+        "horizon_hours": { "type": "integer", "minimum": 1 },
+        "energy_kwh": { "$ref": "#/$defs/PeriodKwh" },
+        "energy_kwh_total": { "type": "number", "minimum": 0 },
+        "cost_energy_mad": { "type": "number", "minimum": 0 },
+        "cost_power_mad": { "type": "number", "minimum": 0 },
+        "cost_ht_mad": { "type": "number", "minimum": 0 },
+        "cost_ttc_mad": { "type": "number", "minimum": 0 },
+        "tva_pct": { "type": "number", "minimum": 0 },
+        "source": { "type": "string" },
+        "note": { "type": "string" }
+      }
+    },
     "WF2Request": {
       "type": "object",
+      "description": "Heure locale du point h : (h + start_hour_local) % 24. WF-2 en deduit la periode tarifaire. Une serie envoyee a 15h a start_hour_local=15 : sans ce champ, WF-2 facturerait la pointe au tarif creuse.",
       "required": ["correlation_id", "series", "battery", "tariffs"],
       "properties": {
         "correlation_id": { "$ref": "#/$defs/CorrelationId" },
         "series": { "type": "array", "items": { "$ref": "#/$defs/SeriesPoint" } },
         "battery": { "$ref": "#/$defs/Battery" },
-        "tariffs": { "$ref": "#/$defs/Tariffs" }
+        "tariffs": { "$ref": "#/$defs/Tariffs" },
+        "start_hour_local": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 23,
+          "default": 0,
+          "description": "Heure locale (0-23) du point h=0. Defaut 0 = minuit, comportement historique."
+        },
+        "grid_cap_mw": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Puissance maximale soutirable au reseau (MW). Derivee de la puissance souscrite de la facture : au-dela, le site est en DEPASSEMENT, lourdement penalise. C'est ce plafond qui cree le deficit que WF-3 doit resoudre. Absent = plafond par defaut du calculateur."
+        },
+        "facture": { "$ref": "#/$defs/Facture" },
+        "baseline": { "$ref": "#/$defs/Baseline" },
+        "meta": {
+          "type": "object",
+          "description": "Tracabilite du tirage (source, mode, graine, fenetre). Ignore par le calcul.",
+          "additionalProperties": true
+        }
       }
     },
     "HourlyPoint": {

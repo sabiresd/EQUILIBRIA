@@ -8,7 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -74,11 +74,68 @@ class Tariffs(Strict):
     pointe: float = Field(ge=0)
 
 
+class PeriodKwh(Strict):
+    """Energie (kWh) ventilee par periode tarifaire."""
+
+    creuse: float = Field(ge=0)
+    normale: float = Field(ge=0)
+    pointe: float = Field(ge=0)
+
+
+class Facture(Strict):
+    """Facture ONEE Moyenne Tension. Valeurs de DEMONSTRATION, non officielles."""
+
+    reference: str
+    periode_debut: str
+    periode_fin: str
+    jours_factures: int = Field(ge=1)
+    puissance_souscrite_kva: float = Field(ge=0)
+    prime_puissance_mad_kva_mois: float = Field(ge=0)
+    consommation_kwh: PeriodKwh
+    prix_mad_kwh: PeriodKwh
+    montant_ht_mad: float | None = Field(default=None, ge=0)
+    montant_total_ttc_mad: float | None = Field(default=None, ge=0)
+
+
+class Baseline(Strict):
+    """Cout de reference sur l'horizon, sans batterie ni reequilibrage.
+
+    C'est ce que le site paie aujourd'hui : le point de comparaison qui permet
+    a WF-2 de chiffrer l'economie d'un plan.
+    """
+
+    horizon_hours: int = Field(ge=1)
+    energy_kwh: PeriodKwh | None = None
+    energy_kwh_total: float = Field(ge=0)
+    cost_energy_mad: float | None = Field(default=None, ge=0)
+    cost_power_mad: float | None = Field(default=None, ge=0)
+    cost_ht_mad: float = Field(ge=0)
+    cost_ttc_mad: float | None = Field(default=None, ge=0)
+    tva_pct: float | None = Field(default=None, ge=0)
+    source: str | None = None
+    note: str | None = None
+
+
 class WF2Request(Strict):
+    """Heure locale du point h : (h + start_hour_local) % 24.
+
+    C'est de la que WF-2 deduit la periode tarifaire. Une serie envoyee a 15 h
+    porte start_hour_local=15 ; sans ce champ, WF-2 prendrait h=0 pour minuit et
+    facturerait les heures de pointe au tarif creuse.
+    """
+
     correlation_id: UUID
     series: list[SeriesPoint]
     battery: Battery
     tariffs: Tariffs
+    start_hour_local: int = Field(default=0, ge=0, le=23)
+    # Puissance max soutirable au reseau. Vient de la puissance souscrite de la
+    # facture : au-dela, le site est en depassement. C'est ce plafond qui cree le
+    # deficit — sans lui, le reseau absorbe tout et WF-3 n'a rien a resoudre.
+    grid_cap_mw: float | None = Field(default=None, gt=0)
+    facture: Facture | None = None
+    baseline: Baseline | None = None
+    meta: dict[str, Any] | None = None
 
 
 class HourlyPoint(Strict):

@@ -1,6 +1,7 @@
 """Alertes, rapports e-mail, journal d'audit, administration."""
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime
 from uuid import uuid4
 
@@ -10,10 +11,34 @@ from pydantic import BaseModel, EmailStr, Field
 
 from app.core.db import get_config, get_db
 from app.core.security import TokenUser, hash_password, require
-from app.services import audit, mailer
+from app.services import audit, clock, mailer
 from app.services.workflows import ping
 
 router = APIRouter(prefix="/api", tags=["ops"])
+
+
+# -------------------------------------------------------------------- live
+@router.get("/live")
+async def live(history: int = 48, user: TokenUser = Depends(require("run:read"))) -> dict:
+    """Etat courant du reseau (rejeu accelere de Data2023) + fenetre recente."""
+    return await clock.live_state(history_hours=min(max(history, 1), 168))
+
+
+class ClockControl(BaseModel):
+    speed: float | None = Field(default=None, ge=0, le=3600)
+    paused: bool | None = None
+
+
+@router.post("/live/control")
+async def live_control(
+    body: ClockControl, user: TokenUser = Depends(require("run:create"))
+) -> dict:
+    """Regle la vitesse (h simulees / s reelle) ou met l'horloge en pause."""
+    if body.speed is not None:
+        await clock.set_speed(body.speed)
+    if body.paused is not None:
+        await clock.set_paused(body.paused)
+    return await clock.live_state(history_hours=1)
 
 
 # ------------------------------------------------------------------ alertes
@@ -96,7 +121,15 @@ async def list_audit(
     if correlation_id:
         query["correlation_id"] = correlation_id
     cursor = get_db().audit_log.find(query).sort("created_at", -1).limit(min(limit, 1000))
-    return [{**e, "id": e.pop("_id")} async for e in cursor]
+
+    def _out(e: dict) -> dict:
+        e["id"] = str(e.pop("_id"))
+        # Le frontend attend `detail` en STRING ; on serialise le dict.
+        d = e.get("detail")
+        e["detail"] = json.dumps(d, ensure_ascii=False, default=str) if isinstance(d, dict) else d
+        return e
+
+    return [_out(e) async for e in cursor]
 
 
 @router.get("/audit/export.csv", response_class=PlainTextResponse)

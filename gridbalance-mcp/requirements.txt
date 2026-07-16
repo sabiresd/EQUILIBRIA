@@ -1,0 +1,6 @@
+pymongo
+certifi
+mcp
+python-dotenv
+openpyxl
+reportlab

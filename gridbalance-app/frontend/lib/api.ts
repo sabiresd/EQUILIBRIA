@@ -151,6 +151,23 @@ type RequestOptions = {
   signal?: AbortSignal;
 };
 
+/** Nom du cookie CSRF pose par le backend (non-httpOnly : lisible par le JS). */
+const CSRF_COOKIE = "gb_csrf";
+
+/**
+ * Lit un cookie cote navigateur. Le backend protege les mutations par
+ * double-submit : le cookie `gb_csrf` doit etre reproduit dans le header
+ * `X-CSRF-Token`, sinon la requete est rejetee en 403. On le relit donc a
+ * chaque mutation. Retourne null cote serveur (SSR) ou si le cookie est absent.
+ */
+function readCookie(name: string): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(
+    new RegExp(`(?:^|;\\s*)${name}=([^;]*)`),
+  );
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 /**
  * Note de typage : on parametre le schema par son type de SORTIE uniquement
  * (`z.ZodType<T, z.ZodTypeDef, unknown>`). Beaucoup de schemas du contrat
@@ -165,6 +182,9 @@ async function request<T>(
 ): Promise<T> {
   const { method = "GET", body, correlationId = null, signal } = options;
 
+  // Mutations : le backend exige le header CSRF en miroir du cookie gb_csrf.
+  const csrf = method !== "GET" ? readCookie(CSRF_COOKIE) : null;
+
   let res: Response;
   try {
     res = await fetch(`${API_URL}${path}`, {
@@ -176,6 +196,7 @@ async function request<T>(
         Accept: "application/json",
         ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
         ...(correlationId ? { "X-Correlation-Id": correlationId } : {}),
+        ...(csrf ? { "X-CSRF-Token": csrf } : {}),
       },
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });
@@ -272,6 +293,35 @@ async function download(path: string, filename: string): Promise<void> {
 
 const Empty = z.any();
 
+/* ------------------------------------------------------------------- live */
+export const LivePointSchema = z.object({
+  h_index: z.number(),
+  ts_utc: z.string(),
+  display_ts: z.string().nullable().optional(),
+  hour_local: z.number(),
+  wind_ms: z.number(),
+  ghi: z.number(),
+  temp_c: z.number(),
+  prod_wind_mw: z.number(),
+  prod_solar_mw: z.number(),
+  prod_total_mw: z.number(),
+  demand_mw: z.number(),
+  net_balance_mw: z.number(),
+  tariff_period: z.string(),
+  tariff_mad_kwh: z.number(),
+});
+export const LiveStateSchema = z.object({
+  h_index: z.number(),
+  count: z.number(),
+  speed: z.number(),
+  paused: z.boolean(),
+  display_now: z.string().nullable().optional(),
+  current: LivePointSchema.nullable(),
+  history: z.array(LivePointSchema),
+});
+export type LivePoint = z.infer<typeof LivePointSchema>;
+export type LiveState = z.infer<typeof LiveStateSchema>;
+
 /* -------------------------------------------------------------------------- */
 /*                                     API                                     */
 /* -------------------------------------------------------------------------- */
@@ -298,6 +348,14 @@ export const api = {
   dashboard: {
     kpis: (): Promise<DashboardKpis> =>
       request("/api/dashboard/kpis", DashboardKpisSchema),
+  },
+
+  /* ------------------------------------------------------------------ live */
+  live: {
+    get: (history = 48): Promise<LiveState> =>
+      request(`/api/live?history=${history}`, LiveStateSchema),
+    control: (payload: { speed?: number; paused?: boolean }): Promise<LiveState> =>
+      request("/api/live/control", LiveStateSchema, { method: "POST", body: payload }),
   },
 
   /* ------------------------------------------------------------------ runs */

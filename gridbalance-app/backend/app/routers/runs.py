@@ -153,7 +153,10 @@ async def propose(
     if not run:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Run introuvable")
     await orchestrator.propose_plan(cid, body.plan_id, user.email)
-    return {"ok": True, "proposed_plan_id": body.plan_id}
+    # Renvoyer le run MIS A JOUR : le frontend le valide contre RunSchema (il attend
+    # un Run complet, pas un simple accuse). Sinon -> erreur de contrat cote client.
+    run = await get_db().runs.find_one({"_id": str(cid)})
+    return _clean(run)  # type: ignore[return-value]
 
 
 @router.get("/validations")
@@ -172,10 +175,14 @@ async def validate(
     cid: UUID, body: ValidateBody, user: TokenUser = Depends(require("plan:validate"))
 ) -> dict:
     try:
-        return await orchestrator.validate_plan(
+        await orchestrator.validate_plan(
             cid, body.plan_id, body.comment, body.approve, user.email
         )
     except WorkflowError as exc:
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, exc.as_dict())
     except ValueError as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc))
+    # Renvoyer le run MIS A JOUR (avec decision_id / validation_status) : le frontend
+    # attend un Run complet (RunSchema), pas l'accuse {approved, sha256}.
+    run = await get_db().runs.find_one({"_id": str(cid)})
+    return _clean(run)  # type: ignore[return-value]

@@ -19,7 +19,9 @@ router = APIRouter(prefix="/api/decisions", tags=["decisions"])
 
 
 def _out(d: dict) -> dict:
-    d["id"] = d.pop("_id")
+    # str() : tolere un _id ObjectId (BSON) aussi bien qu'une chaine, pour ne
+    # jamais casser la serialisation JSON de la liste.
+    d["id"] = str(d.pop("_id"))
     return d
 
 

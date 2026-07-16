@@ -6,7 +6,7 @@
  * Aucun appel direct a la plateforme : tout passe par le backend FastAPI (lib/api.ts).
  */
 import useSWR, { useSWRConfig, type SWRConfiguration } from "swr";
-import { api, ApiError } from "./api";
+import { api, ApiError, type LiveState } from "./api";
 import type {
   Alert,
   Decision,
@@ -100,6 +100,21 @@ export function useDashboardKpis() {
     { ...baseConfig, refreshInterval: POLL_MS, keepPreviousData: true },
   );
   return { kpis: data, error, isLoading, mutate };
+}
+
+/* --------------------------------------------------------------------- live */
+
+/** Cadence rapide pour l'horloge temps reel : 1 seconde. */
+export const LIVE_POLL_MS = 1000;
+
+/** Etat courant du reseau, rejeu accelere de Data2023 (tuile live). */
+export function useLive(history = 48) {
+  const { data, error, isLoading, mutate } = useSWR<LiveState, ApiError>(
+    `/api/live?history=${history}`,
+    () => api.live.get(history),
+    { ...baseConfig, refreshInterval: LIVE_POLL_MS, keepPreviousData: true },
+  );
+  return { live: data, error, isLoading, mutate };
 }
 
 /* --------------------------------------------------------------------- runs */

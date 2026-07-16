@@ -19,6 +19,7 @@ import { ChartCard, ProductionDemandChart, type MainPoint } from "@/components/c
 import { RunStatusBadge, ScenarioBadge, SeverityBadge } from "@/components/badges";
 import { CorrelationId } from "@/components/correlation-id";
 import { ChartSkeleton, EmptyState, ErrorState, KpiSkeleton } from "@/components/states";
+import { LiveTile } from "@/components/live-tile";
 import { useDashboardKpis } from "@/lib/hooks";
 import { ALERT_RULE_LABELS } from "@/lib/types";
 import { fmtMAD, fmtNumber, fmtPercent, fmtRelative } from "@/lib/utils";
@@ -62,6 +63,9 @@ export default function DashboardPage() {
       {error && !kpis ? (
         <ErrorState error={error} onRetry={() => mutate()} className="mb-6" />
       ) : null}
+
+      {/* ------------------------------------------------- reseau temps reel */}
+      <LiveTile />
 
       {/* ------------------------------------------------------------- KPI */}
       <section aria-label="Indicateurs cles" className="mb-6">
